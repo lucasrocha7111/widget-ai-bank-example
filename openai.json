@@ -1,0 +1,58 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Widget de Finanças Pessoais",
+    "description": "API para consultar saldo, investimentos e ações rápidas da conta bancária.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://SUA-URL-DO-NGROK-OU-SERVIDOR.com",
+      "description": "Servidor local ou de produção da API Bun"
+    }
+  ],
+  "paths": {
+    "/v1/widget/status": {
+      "get": {
+        "description": "Busca o resumo financeiro atualizado da conta do usuário para exibir no widget do chat.",
+        "operationId": "getFinanceStatus",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Dados financeiros retornados com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "saldo": {
+                      "type": "string",
+                      "description": "O saldo atualizado da conta formatado em Reais."
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "O estado atual da conta (ex: Conta Aberta)."
+                    },
+                    "investimentos": {
+                      "type": "integer",
+                      "description": "Quantidade de investimentos ativos na carteira."
+                    },
+                    "ultima_transacao": {
+                      "type": "string",
+                      "description": "Detalhes de tempo e autoria da última movimentação."
+                    },
+                    "acoes": {
+                      "type": "array",
+                      "items": { "type": "string" },
+                      "description": "Lista de botões de atalho ou operações permitidas."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
