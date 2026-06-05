@@ -1,0 +1,483 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Loja Itau</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+            padding: 24px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #FF8C00 0%, #FF7300 100%);
+            color: white;
+            padding: 32px 24px;
+            border-radius: 16px;
+            margin-bottom: 32px;
+            box-shadow: 0 8px 24px rgba(255, 140, 0, 0.2);
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .user-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 16px 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            margin-top: 16px;
+        }
+
+        .user-name {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .points-badge {
+            background: rgba(255, 255, 255, 0.25);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .store-section {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .store-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .store-title::before {
+            content: '';
+            width: 4px;
+            height: 28px;
+            background: #FF8C00;
+            border-radius: 2px;
+        }
+
+        .carousel-wrapper {
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+        }
+
+        .carousel {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            padding: 8px;
+            scroll-padding: 0;
+        }
+
+        .carousel::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .carousel::-webkit-scrollbar-track {
+            background: #f0f0f0;
+            border-radius: 10px;
+        }
+
+        .carousel::-webkit-scrollbar-thumb {
+            background: #FF8C00;
+            border-radius: 10px;
+        }
+
+        .carousel::-webkit-scrollbar-thumb:hover {
+            background: #FF7300;
+        }
+
+        .product-card {
+            flex: 0 0 320px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #f0f0f0;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 24px rgba(255, 140, 0, 0.15);
+            border-color: #FF8C00;
+        }
+
+        .product-image-container {
+            position: relative;
+            width: 100%;
+            height: 240px;
+            background: linear-gradient(135deg, #f9f9f9 0%, #f0f0f0 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .product-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 16px;
+        }
+
+        .product-info {
+            padding: 20px;
+        }
+
+        .product-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .product-description {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 16px;
+            line-height: 1.4;
+        }
+
+        .price-section {
+            background: linear-gradient(135deg, #fff9f5 0%, #ffe8d6 100%);
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+        }
+
+        .price-label {
+            font-size: 12px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .price-display {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .original-price {
+            font-size: 14px;
+            color: #999;
+            text-decoration: line-through;
+        }
+
+        .price {
+            font-size: 28px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .discount-info {
+            background: rgba(255, 140, 0, 0.1);
+            padding: 10px;
+            border-radius: 6px;
+            border-left: 3px solid #FF8C00;
+        }
+
+        .discount-text {
+            font-size: 13px;
+            color: #FF7300;
+            font-weight: 600;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #FF8C00 0%, #FF7300 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 140, 0, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 140, 0, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .purchase-feedback {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .purchase-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+
+        .purchase-error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+
+        .nav-indicator {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 13px;
+            color: #999;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 24px 16px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .store-section {
+                padding: 20px;
+            }
+
+            .product-card {
+                flex: 0 0 280px;
+            }
+
+            .price {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛍️ Loja Itau</h1>
+            <div class="user-info">
+                <div class="user-name" id="user-name">Carregando...</div>
+                <div class="points-badge" id="points-badge">0 pontos</div>
+            </div>
+        </div>
+
+        <div class="store-section">
+            <div class="store-title">Produtos em destaque</div>
+
+            <div class="carousel-wrapper">
+                <div class="carousel" id="carousel">
+                    <!-- Cards de produto serão injetados aqui -->
+                </div>
+            </div>
+            <div class="nav-indicator">💡 Deslize para explorar mais produtos</div>
+        </div>
+    </div>
+
+    <script>
+        const SERVER_ORIGIN = "{{SERVER_ORIGIN}}";
+        const USER_ID = 'user-1';
+        let products = [];
+        let user = null;
+
+        function formatPrice(value) {
+            return `$${value.toFixed(2)}`;
+        }
+
+        function computeDiscount(points) {
+            const blocks = Math.floor(points / 100);
+            const percent = Math.min(20, blocks * 5);
+            return percent;
+        }
+
+        async function load() {
+            try {
+                const [pRes, uRes] = await Promise.all([
+                    fetch(`${SERVER_ORIGIN}/products`),
+                    fetch(`${SERVER_ORIGIN}/users/${USER_ID}`),
+                ]);
+
+                if (!pRes.ok || !uRes.ok) throw new Error('Falha ao carregar dados');
+
+                products = await pRes.json();
+                user = await uRes.json();
+
+                document.getElementById('user-name').textContent = user.name;
+                document.getElementById('points-badge').textContent = `${user.points} pontos`;
+
+                renderCarousel();
+            } catch (err) {
+                console.error(err);
+                document.querySelector('.store-section').innerHTML = `<div class="error-message">❌ Erro ao carregar loja. Tente novamente.</div>`;
+            }
+        }
+
+        function renderCarousel() {
+            const carousel = document.getElementById('carousel');
+            carousel.innerHTML = '';
+
+            products.forEach((product, idx) => {
+                const discountPercent = computeDiscount(user.points);
+                const discountedPrice = product.price * (1 - discountPercent / 100);
+                const discount = product.price - discountedPrice;
+
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <div class="product-image-container">
+                        <img class="product-image" src="${product.imageUrl}" alt="${product.name}" />
+                    </div>
+                    <div class="product-info">
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-description">${product.description}</div>
+
+                        <div class="price-section">
+                            <div class="price-label">Preço Normal</div>
+                            <div class="price-display">
+                                <div class="price">${formatPrice(product.price)}</div>
+                            </div>
+
+                            ${discountPercent > 0 ? `
+                                <div class="discount-info">
+                                    <div class="discount-text">
+                                        🎁 Com pontos: ${formatPrice(discountedPrice)} (${discountPercent}% OFF)
+                                    </div>
+                                    <div class="discount-text" style="margin-top: 4px; font-size: 12px;">
+                                        Economize: ${formatPrice(discount)}
+                                    </div>
+                                </div>
+                            ` : `
+                                <div class="discount-info">
+                                    <div class="discount-text">
+                                        📌 Acumule 100 pontos para ganhar desconto!
+                                    </div>
+                                </div>
+                            `}
+                        </div>
+
+                        <div class="button-group">
+                            <button class="btn btn-primary" onclick="purchase('${product.id}', ${product.price}, ${discountPercent})">
+                                Comprar
+                            </button>
+                        </div>
+                        <div id="feedback-${idx}" class="purchase-feedback" style="display:none;"></div>
+                    </div>
+                `;
+
+                carousel.appendChild(card);
+            });
+        }
+
+        async function purchase(productId, price, discountPercent) {
+            const usePoints = discountPercent > 0 && confirm(`🎉 Usar ${discountPercent}% de desconto com seus pontos?`);
+
+            try {
+                const resp = await fetch(`${SERVER_ORIGIN}/purchase`, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify({ userId: USER_ID, productId, usePoints })
+                });
+
+                const result = await resp.json();
+
+                if (result.error) {
+                    showFeedback(productId, `❌ Erro: ${result.error}`, false);
+                } else {
+                    user = result.user;
+                    document.getElementById('user-name').textContent = user.name;
+                    document.getElementById('points-badge').textContent = `${user.points} pontos`;
+                    const totalPaid = result.totalPaid;
+                    const saved = price - totalPaid;
+                    showFeedback(productId, `✅ Compra realizada! Pagou: ${formatPrice(totalPaid)}${usePoints ? ` (Economizou ${formatPrice(saved)})` : ''}`, true);
+                    renderCarousel();
+                }
+            } catch (err) {
+                console.error(err);
+                showFeedback(productId, '❌ Falha na compra', false);
+            }
+        }
+
+        function showFeedback(productId, message, isSuccess) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            const idx = products.indexOf(product);
+            const feedbackEl = document.getElementById(`feedback-${idx}`);
+            feedbackEl.className = `purchase-feedback ${isSuccess ? 'purchase-success' : 'purchase-error'}`;
+            feedbackEl.textContent = message;
+            feedbackEl.style.display = 'block';
+
+            setTimeout(() => {
+                feedbackEl.style.display = 'none';
+            }, 4000);
+        }
+
+        load();
+    </script>
+</body>
+
+</html>
