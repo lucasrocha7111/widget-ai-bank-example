@@ -1,393 +1,671 @@
 <!doctype html>
 <html>
-
-<head>
+  <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Loja Itau</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
-            padding: 24px;
-            min-height: 100vh;
-        }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+        padding: 24px;
+        min-height: 100vh;
+      }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
 
+      .header {
+        background: linear-gradient(135deg, #ff8c00 0%, #ff7300 100%);
+        color: white;
+        padding: 32px 24px;
+        border-radius: 16px;
+        margin-bottom: 32px;
+        box-shadow: 0 8px 24px rgba(255, 140, 0, 0.2);
+      }
+
+      .header h1 {
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+
+      .user-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.15);
+        padding: 16px 20px;
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        margin-top: 16px;
+      }
+
+      .user-name {
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .points-badge {
+        background: rgba(255, 255, 255, 0.25);
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 16px;
+      }
+
+      .store-section {
+        background: white;
+        border-radius: 16px;
+        padding: 32px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      }
+
+      .store-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .store-title::before {
+        content: "";
+        width: 4px;
+        height: 28px;
+        background: #ff8c00;
+        border-radius: 2px;
+      }
+
+      .carousel-wrapper {
+        position: relative;
+        overflow: hidden;
+        border-radius: 12px;
+      }
+
+      .carousel {
+        display: flex;
+        gap: 20px;
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        padding: 8px;
+        scroll-padding: 0;
+      }
+
+      .carousel::-webkit-scrollbar {
+        height: 8px;
+      }
+
+      .carousel::-webkit-scrollbar-track {
+        background: #f0f0f0;
+        border-radius: 10px;
+      }
+
+      .carousel::-webkit-scrollbar-thumb {
+        background: #ff8c00;
+        border-radius: 10px;
+      }
+
+      .carousel::-webkit-scrollbar-thumb:hover {
+        background: #ff7300;
+      }
+
+      .product-card {
+        flex: 0 0 320px;
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #f0f0f0;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+
+      .product-card.selected {
+        border-color: #ff8c00;
+        box-shadow:
+          0 0 0 3px rgba(255, 140, 0, 0.2),
+          0 12px 24px rgba(255, 140, 0, 0.18);
+        transform: translateY(-4px);
+      }
+
+      .product-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 24px rgba(255, 140, 0, 0.15);
+        border-color: #ff8c00;
+      }
+
+      .product-image-container {
+        position: relative;
+        width: 100%;
+        height: 240px;
+        background: linear-gradient(135deg, #f9f9f9 0%, #f0f0f0 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      .product-image {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        padding: 16px;
+      }
+
+      .product-info {
+        padding: 20px;
+      }
+
+      .product-name {
+        font-size: 18px;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 8px;
+      }
+
+      .product-description {
+        font-size: 13px;
+        color: #666;
+        margin-bottom: 16px;
+        line-height: 1.4;
+      }
+
+      .price-section {
+        background: linear-gradient(135deg, #fff9f5 0%, #ffe8d6 100%);
+        padding: 16px;
+        border-radius: 10px;
+        margin-bottom: 16px;
+      }
+
+      .price-label {
+        font-size: 12px;
+        color: #999;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+
+      .price-display {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .original-price {
+        font-size: 14px;
+        color: #999;
+        text-decoration: line-through;
+      }
+
+      .price {
+        font-size: 28px;
+        font-weight: 700;
+        color: #333;
+      }
+
+      .discount-info {
+        background: rgba(255, 140, 0, 0.1);
+        padding: 10px;
+        border-radius: 6px;
+        border-left: 3px solid #ff8c00;
+      }
+
+      .discount-text {
+        font-size: 13px;
+        color: #ff7300;
+        font-weight: 600;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 12px;
+      }
+
+      .btn {
+        flex: 1;
+        padding: 12px 16px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #ff8c00 0%, #ff7300 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(255, 140, 0, 0.3);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(255, 140, 0, 0.4);
+      }
+
+      .btn-primary:active {
+        transform: translateY(0);
+      }
+
+      .purchase-feedback {
+        margin-top: 16px;
+        padding: 12px;
+        border-radius: 8px;
+        text-align: center;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .purchase-success {
+        background: #e8f5e9;
+        color: #2e7d32;
+        border: 1px solid #c8e6c9;
+      }
+
+      .purchase-error {
+        background: #ffebee;
+        color: #c62828;
+        border: 1px solid #ffcdd2;
+      }
+
+      .nav-indicator {
+        text-align: center;
+        margin-top: 16px;
+        font-size: 13px;
+        color: #999;
+      }
+
+      .question-box {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+
+      .question-input {
+        width: 100%;
+        border: 1px solid #e2e2e2;
+        border-radius: 10px;
+        padding: 12px 14px;
+        font-size: 14px;
+        outline: none;
+      }
+
+      .question-input:focus {
+        border-color: #ff8c00;
+        box-shadow: 0 0 0 3px rgba(255, 140, 0, 0.15);
+      }
+
+      .question-result {
+        margin-bottom: 16px;
+        padding: 12px;
+        border-radius: 10px;
+        font-size: 14px;
+        color: #333;
+        border: 1px solid #ffe2c2;
+        background: #fff8f1;
+        display: none;
+      }
+
+      .selected-product {
+        margin-bottom: 20px;
+        border: 1px solid #ffe2c2;
+        background: linear-gradient(135deg, #fffaf5 0%, #fff2e7 100%);
+        border-radius: 12px;
+        padding: 16px;
+        display: none;
+      }
+
+      .selected-product h3 {
+        color: #a04a00;
+        margin-bottom: 8px;
+        font-size: 18px;
+      }
+
+      .selected-product p {
+        color: #4e4e4e;
+        margin-bottom: 8px;
+        line-height: 1.4;
+      }
+
+      .error-message {
+        background: #ffebee;
+        color: #c62828;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+        font-weight: 500;
+      }
+
+      .detail-screen {
+        margin-bottom: 18px;
+        border: 1px solid #ffd9b7;
+        border-radius: 14px;
+        background: linear-gradient(145deg, #fff8ef 0%, #fff0df 100%);
+        padding: 16px;
+        display: none;
+      }
+
+      .detail-screen h3 {
+        color: #8a3e00;
+        font-size: 20px;
+        margin-bottom: 12px;
+      }
+
+      .detail-grid {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        gap: 14px;
+      }
+
+      .detail-image {
+        width: 100%;
+        height: 220px;
+        object-fit: contain;
+        border-radius: 10px;
+        background: #fff;
+        border: 1px solid #f3e6d9;
+        padding: 10px;
+      }
+
+      .detail-price-old {
+        font-size: 14px;
+        text-decoration: line-through;
+        color: #9d8b78;
+      }
+
+      .detail-price-new {
+        font-size: 30px;
+        font-weight: 800;
+        color: #2f2f2f;
+        margin: 4px 0 8px;
+      }
+
+      .detail-note {
+        font-size: 12px;
+        color: #8a4a00;
+        background: #fff5e9;
+        border: 1px solid #ffd7ae;
+        border-radius: 999px;
+        padding: 5px 10px;
+        display: inline-block;
+      }
+
+      .detail-meta {
+        margin-top: 10px;
+        font-size: 14px;
+        color: #4e4e4e;
+        line-height: 1.5;
+      }
+
+      @media (max-width: 768px) {
         .header {
-            background: linear-gradient(135deg, #FF8C00 0%, #FF7300 100%);
-            color: white;
-            padding: 32px 24px;
-            border-radius: 16px;
-            margin-bottom: 32px;
-            box-shadow: 0 8px 24px rgba(255, 140, 0, 0.2);
+          padding: 24px 16px;
         }
 
         .header h1 {
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .user-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.15);
-            padding: 16px 20px;
-            border-radius: 12px;
-            backdrop-filter: blur(10px);
-            margin-top: 16px;
-        }
-
-        .user-name {
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .points-badge {
-            background: rgba(255, 255, 255, 0.25);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: 700;
-            font-size: 16px;
+          font-size: 24px;
         }
 
         .store-section {
-            background: white;
-            border-radius: 16px;
-            padding: 32px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-        }
-
-        .store-title {
-            font-size: 24px;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 24px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .store-title::before {
-            content: '';
-            width: 4px;
-            height: 28px;
-            background: #FF8C00;
-            border-radius: 2px;
-        }
-
-        .carousel-wrapper {
-            position: relative;
-            overflow: hidden;
-            border-radius: 12px;
-        }
-
-        .carousel {
-            display: flex;
-            gap: 20px;
-            overflow-x: auto;
-            scroll-behavior: smooth;
-            padding: 8px;
-            scroll-padding: 0;
-        }
-
-        .carousel::-webkit-scrollbar {
-            height: 8px;
-        }
-
-        .carousel::-webkit-scrollbar-track {
-            background: #f0f0f0;
-            border-radius: 10px;
-        }
-
-        .carousel::-webkit-scrollbar-thumb {
-            background: #FF8C00;
-            border-radius: 10px;
-        }
-
-        .carousel::-webkit-scrollbar-thumb:hover {
-            background: #FF7300;
+          padding: 20px;
         }
 
         .product-card {
-            flex: 0 0 320px;
-            background: white;
-            border-radius: 12px;
-            border: 1px solid #f0f0f0;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .product-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 24px rgba(255, 140, 0, 0.15);
-            border-color: #FF8C00;
-        }
-
-        .product-image-container {
-            position: relative;
-            width: 100%;
-            height: 240px;
-            background: linear-gradient(135deg, #f9f9f9 0%, #f0f0f0 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-
-        .product-image {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            padding: 16px;
-        }
-
-        .product-info {
-            padding: 20px;
-        }
-
-        .product-name {
-            font-size: 18px;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 8px;
-        }
-
-        .product-description {
-            font-size: 13px;
-            color: #666;
-            margin-bottom: 16px;
-            line-height: 1.4;
-        }
-
-        .price-section {
-            background: linear-gradient(135deg, #fff9f5 0%, #ffe8d6 100%);
-            padding: 16px;
-            border-radius: 10px;
-            margin-bottom: 16px;
-        }
-
-        .price-label {
-            font-size: 12px;
-            color: #999;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 600;
-            margin-bottom: 6px;
-        }
-
-        .price-display {
-            display: flex;
-            align-items: baseline;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        .original-price {
-            font-size: 14px;
-            color: #999;
-            text-decoration: line-through;
+          flex: 0 0 280px;
         }
 
         .price {
-            font-size: 28px;
-            font-weight: 700;
-            color: #333;
+          font-size: 24px;
         }
 
-        .discount-info {
-            background: rgba(255, 140, 0, 0.1);
-            padding: 10px;
-            border-radius: 6px;
-            border-left: 3px solid #FF8C00;
+        .question-box {
+          grid-template-columns: 1fr;
         }
-
-        .discount-text {
-            font-size: 13px;
-            color: #FF7300;
-            font-weight: 600;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 12px;
-        }
-
-        .btn {
-            flex: 1;
-            padding: 12px 16px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #FF8C00 0%, #FF7300 100%);
-            color: white;
-            box-shadow: 0 4px 12px rgba(255, 140, 0, 0.3);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(255, 140, 0, 0.4);
-        }
-
-        .btn-primary:active {
-            transform: translateY(0);
-        }
-
-        .purchase-feedback {
-            margin-top: 16px;
-            padding: 12px;
-            border-radius: 8px;
-            text-align: center;
-            font-size: 13px;
-            font-weight: 600;
-        }
-
-        .purchase-success {
-            background: #e8f5e9;
-            color: #2e7d32;
-            border: 1px solid #c8e6c9;
-        }
-
-        .purchase-error {
-            background: #ffebee;
-            color: #c62828;
-            border: 1px solid #ffcdd2;
-        }
-
-        .nav-indicator {
-            text-align: center;
-            margin-top: 16px;
-            font-size: 13px;
-            color: #999;
-        }
-
-        .error-message {
-            background: #ffebee;
-            color: #c62828;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-            font-weight: 500;
-        }
-
-        @media (max-width: 768px) {
-            .header {
-                padding: 24px 16px;
-            }
-
-            .header h1 {
-                font-size: 24px;
-            }
-
-            .store-section {
-                padding: 20px;
-            }
-
-            .product-card {
-                flex: 0 0 280px;
-            }
-
-            .price {
-                font-size: 24px;
-            }
-        }
+      }
     </style>
-</head>
+  </head>
 
-<body>
+  <body>
     <div class="container">
-        <div class="header">
-            <h1>🛍️ Loja Itau</h1>
-            <div class="user-info">
-                <div class="user-name" id="user-name">Carregando...</div>
-                <div class="points-badge" id="points-badge">0 pontos</div>
-            </div>
+      <div class="header">
+        <h1>🛍️ Loja Itau</h1>
+        <div class="user-info">
+          <div class="user-name" id="user-name">Carregando...</div>
+          <div class="points-badge" id="points-badge">0 pontos</div>
         </div>
+      </div>
 
-        <div class="store-section">
-            <div class="store-title">Produtos em destaque</div>
+      <div class="store-section">
+        <div class="store-title">Produtos em destaque</div>
 
-            <div class="carousel-wrapper">
-                <div class="carousel" id="carousel">
-                    <!-- Cards de produto serão injetados aqui -->
-                </div>
-            </div>
-            <div class="nav-indicator">💡 Deslize para explorar mais produtos</div>
+        <div id="detail-screen" class="detail-screen"></div>
+
+        <div class="question-box">
+          <input
+            id="question-input"
+            class="question-input"
+            placeholder="Ex.: Quero um iPhone na loja do Itau, tem?"
+          />
+          <button class="btn btn-primary" onclick="askProductQuestion()">
+            Perguntar
+          </button>
         </div>
+        <div id="question-result" class="question-result"></div>
+        <div id="selected-product" class="selected-product"></div>
+
+        <div class="carousel-wrapper">
+          <div class="carousel" id="carousel">
+            <!-- Cards de produto serão injetados aqui -->
+          </div>
+        </div>
+        <div class="nav-indicator">💡 Deslize para explorar mais produtos</div>
+      </div>
     </div>
 
     <script>
-        const SERVER_ORIGIN = "{{SERVER_ORIGIN}}";
-        const USER_ID = 'user-1';
-        let products = [];
-        let user = null;
+      const SERVER_ORIGIN = "{{SERVER_ORIGIN}}";
+      const USER_ID = "user-1";
+      let products = [];
+      let user = null;
+      let selectedProductId = null;
+      let bridgeReady = null;
 
-        function formatPrice(value) {
-            return `$${value.toFixed(2)}`;
+      function formatPrice(value) {
+        return `$${value.toFixed(2)}`;
+      }
+
+      function computeDiscount(points) {
+        const blocks = Math.floor(points / 100);
+        const percent = Math.min(20, blocks * 5);
+        return percent;
+      }
+
+      function renderDetailScreen(product) {
+        if (!product) return;
+
+        const detailEl = document.getElementById("detail-screen");
+        const discountPercent = computeDiscount(user?.points || 0);
+        const discountedPrice = product.price * (1 - discountPercent / 100);
+        const savedValue = product.price - discountedPrice;
+
+        detailEl.style.display = "block";
+        detailEl.innerHTML = `
+          <h3>Tela especifica do produto</h3>
+          <div class="detail-grid">
+            <img class="detail-image" src="${product.imageUrl}" alt="${escapeHtml(product.name)}" />
+            <div>
+              <div style="font-size:22px;font-weight:700;color:#333;">${escapeHtml(product.name)}</div>
+              <div style="margin-top:6px;color:#666;">${escapeHtml(product.description)}</div>
+              <div style="margin-top:12px;">
+                ${discountPercent > 0 ? `<div class="detail-price-old">${formatPrice(product.price)}</div>` : ""}
+                <div class="detail-price-new">${formatPrice(discountedPrice)}</div>
+                <div class="detail-note">${discountPercent > 0 ? `${discountPercent}% OFF com ${user?.points || 0} pontos. Economia ${formatPrice(savedValue)}.` : `Sem desconto no momento. Pontos atuais: ${user?.points || 0}.`}</div>
+              </div>
+              <div class="detail-meta">
+                <div><strong>ID:</strong> ${escapeHtml(product.id)}</div>
+                <div><strong>Estoque:</strong> ${product.stock > 0 ? `${product.stock} unidade(s)` : "Sem estoque"}</div>
+                <div style="margin-top:10px;"><button class="btn btn-primary" onclick="purchase('${product.id}', ${product.price}, ${discountPercent})">Comprar agora</button></div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        detailEl.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      function escapeHtml(text) {
+        return String(text || "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+
+      async function load() {
+        try {
+          const [pRes, uRes] = await Promise.all([
+            fetch(`${SERVER_ORIGIN}/products`),
+            fetch(`${SERVER_ORIGIN}/users/${USER_ID}`),
+          ]);
+
+          if (!pRes.ok || !uRes.ok) throw new Error("Falha ao carregar dados");
+
+          products = await pRes.json();
+          user = await uRes.json();
+
+          document.getElementById("user-name").textContent = user.name;
+          document.getElementById("points-badge").textContent =
+            `${user.points} pontos`;
+
+          renderCarousel();
+
+          const productFromQuery = new URLSearchParams(
+            window.location.search,
+          ).get("productId");
+          if (
+            productFromQuery &&
+            products.some((product) => product.id === productFromQuery)
+          ) {
+            selectProduct(productFromQuery);
+          }
+        } catch (err) {
+          console.error(err);
+          document.querySelector(".store-section").innerHTML =
+            `<div class="error-message">❌ Erro ao carregar loja. Tente novamente.</div>`;
+        }
+      }
+
+      function setupMcpBridge() {
+        if (window.location.protocol !== "ui:") {
+          bridgeReady = Promise.resolve();
+          return;
         }
 
-        function computeDiscount(points) {
-            const blocks = Math.floor(points / 100);
-            const percent = Math.min(20, blocks * 5);
-            return percent;
-        }
+        let rpcId = 0;
+        const pendingRequests = new Map();
 
-        async function load() {
-            try {
-                const [pRes, uRes] = await Promise.all([
-                    fetch(`${SERVER_ORIGIN}/products`),
-                    fetch(`${SERVER_ORIGIN}/users/${USER_ID}`),
-                ]);
+        const rpcNotify = (method, params) => {
+          window.parent.postMessage({ jsonrpc: "2.0", method, params }, "*");
+        };
 
-                if (!pRes.ok || !uRes.ok) throw new Error('Falha ao carregar dados');
+        const rpcRequest = (method, params) =>
+          new Promise((resolve, reject) => {
+            const id = ++rpcId;
+            pendingRequests.set(id, { resolve, reject });
+            window.parent.postMessage(
+              { jsonrpc: "2.0", id, method, params },
+              "*",
+            );
+          });
 
-                products = await pRes.json();
-                user = await uRes.json();
+        window.addEventListener(
+          "message",
+          (event) => {
+            if (event.source !== window.parent) return;
+            const message = event.data;
+            if (!message || message.jsonrpc !== "2.0") return;
 
-                document.getElementById('user-name').textContent = user.name;
-                document.getElementById('points-badge').textContent = `${user.points} pontos`;
-
-                renderCarousel();
-            } catch (err) {
-                console.error(err);
-                document.querySelector('.store-section').innerHTML = `<div class="error-message">❌ Erro ao carregar loja. Tente novamente.</div>`;
+            if (typeof message.id === "number") {
+              const pending = pendingRequests.get(message.id);
+              if (!pending) return;
+              pendingRequests.delete(message.id);
+              if (message.error) {
+                pending.reject(message.error);
+                return;
+              }
+              pending.resolve(message.result);
+              return;
             }
-        }
 
-        function renderCarousel() {
-            const carousel = document.getElementById('carousel');
-            carousel.innerHTML = '';
+            if (message.method !== "ui/notifications/tool-result") return;
 
-            products.forEach((product, idx) => {
-                const discountPercent = computeDiscount(user.points);
-                const discountedPrice = product.price * (1 - discountPercent / 100);
-                const discount = product.price - discountedPrice;
+            const payload = message.params?.result || message.params;
+            const structured = payload?.structuredContent;
+            const toolName = message.params?.name || payload?.name || "";
+            const isOpenDetailTool =
+              typeof toolName === "string" &&
+              (toolName === "open_product_detail" ||
+                toolName.startsWith("open_prod_"));
 
-                const card = document.createElement('div');
-                card.className = 'product-card';
-                card.innerHTML = `
+            if (isOpenDetailTool && structured?.product) {
+              renderDetailScreen(structured.product);
+              return;
+            }
+
+            // Defensive fallback when host omits toolName but sends product payload.
+            if (structured?.product?.id && structured?.detailUrl) {
+              renderDetailScreen(structured.product);
+            }
+          },
+          { passive: true },
+        );
+
+        bridgeReady = rpcRequest("ui/initialize", {
+          appInfo: { name: "store-widget", version: "0.1.0" },
+          appCapabilities: {},
+          protocolVersion: "2026-01-26",
+        })
+          .then(() => rpcNotify("ui/notifications/initialized", {}))
+          .catch((error) => {
+            console.error("Falha ao inicializar bridge MCP:", error);
+          });
+      }
+
+      function renderCarousel() {
+        const carousel = document.getElementById("carousel");
+        carousel.innerHTML = "";
+
+        products.forEach((product, idx) => {
+          const discountPercent = computeDiscount(user.points);
+          const discountedPrice = product.price * (1 - discountPercent / 100);
+          const discount = product.price - discountedPrice;
+
+          const card = document.createElement("div");
+          card.className = "product-card";
+          card.dataset.productId = product.id;
+          if (selectedProductId === product.id) {
+            card.classList.add("selected");
+          }
+          card.innerHTML = `
                     <div class="product-image-container">
                         <img class="product-image" src="${product.imageUrl}" alt="${product.name}" />
                     </div>
@@ -401,7 +679,9 @@
                                 <div class="price">${formatPrice(product.price)}</div>
                             </div>
 
-                            ${discountPercent > 0 ? `
+                            ${
+                              discountPercent > 0
+                                ? `
                                 <div class="discount-info">
                                     <div class="discount-text">
                                         🎁 Com pontos: ${formatPrice(discountedPrice)} (${discountPercent}% OFF)
@@ -410,17 +690,22 @@
                                         Economize: ${formatPrice(discount)}
                                     </div>
                                 </div>
-                            ` : `
+                            `
+                                : `
                                 <div class="discount-info">
                                     <div class="discount-text">
                                         📌 Acumule 100 pontos para ganhar desconto!
                                     </div>
                                 </div>
-                            `}
+                            `
+                            }
                         </div>
 
                         <div class="button-group">
-                            <button class="btn btn-primary" onclick="purchase('${product.id}', ${product.price}, ${discountPercent})">
+                          <button class="btn" style="background:#fff3e7;color:#a04a00;border:1px solid #ffd7b3;" onclick="event.stopPropagation(); openProductDetail('${product.id}')">
+                            Ver detalhes
+                          </button>
+                            <button class="btn btn-primary" onclick="event.stopPropagation(); purchase('${product.id}', ${product.price}, ${discountPercent})">
                                 Comprar
                             </button>
                         </div>
@@ -428,56 +713,151 @@
                     </div>
                 `;
 
-                carousel.appendChild(card);
-            });
+          card.addEventListener("click", () => {
+            openProductDetail(product.id);
+          });
+
+          carousel.appendChild(card);
+        });
+      }
+
+      function selectProduct(productId) {
+        selectedProductId = productId;
+        const product = products.find((p) => p.id === productId);
+        if (!product) return;
+
+        const selectedEl = document.getElementById("selected-product");
+        selectedEl.style.display = "block";
+        selectedEl.innerHTML = `
+          <h3>Tela de detalhes do item selecionado</h3>
+                <p><strong>Produto:</strong> ${escapeHtml(product.name)}</p>
+                <p><strong>Descricao:</strong> ${escapeHtml(product.description)}</p>
+                <p><strong>Preco:</strong> ${formatPrice(product.price)}</p>
+                <p><strong>Estoque:</strong> ${product.stock > 0 ? `${product.stock} unidade(s)` : "Sem estoque"}</p>
+          <p><strong>Abrir pagina dedicada:</strong> <a href="${SERVER_ORIGIN}/store/product/${encodeURIComponent(product.id)}" target="_blank" rel="noopener noreferrer">${SERVER_ORIGIN}/store/product/${encodeURIComponent(product.id)}</a></p>
+            `;
+
+        document.querySelectorAll(".product-card").forEach((cardEl) => {
+          if (cardEl.dataset.productId === productId) {
+            cardEl.classList.add("selected");
+          } else {
+            cardEl.classList.remove("selected");
+          }
+        });
+      }
+
+      function openProductDetail(productId) {
+        const detailUrl = `${SERVER_ORIGIN}/store/product/${encodeURIComponent(productId)}`;
+
+        // In MCP embedded apps (ui://), cross-origin navigation may be blocked.
+        // Fallback to rendering details inside the same page so click always works.
+        if (window.location.protocol === "ui:") {
+          selectProduct(productId);
+          const selectedEl = document.getElementById("selected-product");
+          selectedEl.scrollIntoView({ behavior: "smooth", block: "start" });
+          return;
         }
 
-        async function purchase(productId, price, discountPercent) {
-            const usePoints = discountPercent > 0 && confirm(`🎉 Usar ${discountPercent}% de desconto com seus pontos?`);
+        window.location.href = detailUrl;
+      }
 
-            try {
-                const resp = await fetch(`${SERVER_ORIGIN}/purchase`, {
-                    method: 'POST',
-                    headers: { 'content-type': 'application/json' },
-                    body: JSON.stringify({ userId: USER_ID, productId, usePoints })
-                });
+      async function askProductQuestion() {
+        const input = document.getElementById("question-input");
+        const question = input.value.trim();
+        const resultEl = document.getElementById("question-result");
 
-                const result = await resp.json();
-
-                if (result.error) {
-                    showFeedback(productId, `❌ Erro: ${result.error}`, false);
-                } else {
-                    user = result.user;
-                    document.getElementById('user-name').textContent = user.name;
-                    document.getElementById('points-badge').textContent = `${user.points} pontos`;
-                    const totalPaid = result.totalPaid;
-                    const saved = price - totalPaid;
-                    showFeedback(productId, `✅ Compra realizada! Pagou: ${formatPrice(totalPaid)}${usePoints ? ` (Economizou ${formatPrice(saved)})` : ''}`, true);
-                    renderCarousel();
-                }
-            } catch (err) {
-                console.error(err);
-                showFeedback(productId, '❌ Falha na compra', false);
-            }
+        if (!question) {
+          resultEl.style.display = "block";
+          resultEl.textContent = "Digite uma pergunta para consultar um item.";
+          return;
         }
 
-        function showFeedback(productId, message, isSuccess) {
-            const product = products.find(p => p.id === productId);
-            if (!product) return;
+        try {
+          const resp = await fetch(
+            `${SERVER_ORIGIN}/products/search?q=${encodeURIComponent(question)}`,
+          );
+          const result = await resp.json();
 
-            const idx = products.indexOf(product);
-            const feedbackEl = document.getElementById(`feedback-${idx}`);
-            feedbackEl.className = `purchase-feedback ${isSuccess ? 'purchase-success' : 'purchase-error'}`;
-            feedbackEl.textContent = message;
-            feedbackEl.style.display = 'block';
+          if (!resp.ok || result.error) {
+            resultEl.style.display = "block";
+            resultEl.textContent = `Nao foi possivel consultar agora: ${result.error || "erro desconhecido"}`;
+            return;
+          }
 
-            setTimeout(() => {
-                feedbackEl.style.display = 'none';
-            }, 4000);
+          resultEl.style.display = "block";
+          resultEl.textContent = result.answer;
+
+          if (result.found && result.product?.id) {
+            openProductDetail(result.product.id);
+          }
+        } catch (err) {
+          console.error(err);
+          resultEl.style.display = "block";
+          resultEl.textContent = "Erro de rede ao consultar produto.";
         }
+      }
 
-        load();
+      async function purchase(productId, price, discountPercent) {
+        const usePoints =
+          discountPercent > 0 &&
+          confirm(`🎉 Usar ${discountPercent}% de desconto com seus pontos?`);
+
+        try {
+          const resp = await fetch(`${SERVER_ORIGIN}/purchase`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ userId: USER_ID, productId, usePoints }),
+          });
+
+          const result = await resp.json();
+
+          if (result.error) {
+            showFeedback(productId, `❌ Erro: ${result.error}`, false);
+          } else {
+            user = result.user;
+            document.getElementById("user-name").textContent = user.name;
+            document.getElementById("points-badge").textContent =
+              `${user.points} pontos`;
+            const totalPaid = result.totalPaid;
+            const saved = price - totalPaid;
+            showFeedback(
+              productId,
+              `✅ Compra realizada! Pagou: ${formatPrice(totalPaid)}${usePoints ? ` (Economizou ${formatPrice(saved)})` : ""}`,
+              true,
+            );
+            renderCarousel();
+          }
+        } catch (err) {
+          console.error(err);
+          showFeedback(productId, "❌ Falha na compra", false);
+        }
+      }
+
+      function showFeedback(productId, message, isSuccess) {
+        const product = products.find((p) => p.id === productId);
+        if (!product) return;
+
+        const idx = products.indexOf(product);
+        const feedbackEl = document.getElementById(`feedback-${idx}`);
+        feedbackEl.className = `purchase-feedback ${isSuccess ? "purchase-success" : "purchase-error"}`;
+        feedbackEl.textContent = message;
+        feedbackEl.style.display = "block";
+
+        setTimeout(() => {
+          feedbackEl.style.display = "none";
+        }, 4000);
+      }
+
+      document
+        .getElementById("question-input")
+        .addEventListener("keydown", (event) => {
+          if (event.key === "Enter") {
+            askProductQuestion();
+          }
+        });
+
+      setupMcpBridge();
+      load();
     </script>
-</body>
-
+  </body>
 </html>

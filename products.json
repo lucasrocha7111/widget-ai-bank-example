@@ -1,26 +1,26 @@
 [
-    {
-        "id": "prod-iphone-14",
-        "name": "iPhone 14",
-        "description": "iPhone 14 with 128GB storage",
-        "price": 799.0,
-        "imageUrl": "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-14-model-unselect-gallery-1-202209?wid=800&hei=800&fmt=jpeg&qlt=80&.v=1662038659943",
-        "stock": 12
-    },
-    {
-        "id": "prod-airpods-pro",
-        "name": "AirPods Pro",
-        "description": "AirPods Pro (2nd generation)",
-        "price": 249.0,
-        "imageUrl": "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/MWP22?wid=800&hei=800&fmt=jpeg&qlt=80&.v=1591634795000",
-        "stock": 30
-    },
-    {
-        "id": "prod-macbook-air",
-        "name": "MacBook Air",
-        "description": "MacBook Air 13-inch with M1",
-        "price": 999.0,
-        "imageUrl": "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/macbook-air-spacegray-select-202011?wid=800&hei=800&fmt=jpeg&qlt=80&.v=1603406905000",
-        "stock": 5
-    }
+  {
+    "id": "prod-iphone-14",
+    "name": "iPhone 14",
+    "description": "iPhone 14 with 128GB storage",
+    "price": 799.0,
+    "imageUrl": "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-14-model-unselect-gallery-1-202209?wid=800&hei=800&fmt=jpeg&qlt=80&.v=1662038659943",
+    "stock": 12
+  },
+  {
+    "id": "prod-airpods-pro",
+    "name": "AirPods Pro",
+    "description": "AirPods Pro (2nd generation)",
+    "price": 249.0,
+    "imageUrl": "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/MWP22?wid=800&hei=800&fmt=jpeg&qlt=80&.v=1591634795000",
+    "stock": 30
+  },
+  {
+    "id": "prod-macbook-air",
+    "name": "MacBook Air",
+    "description": "MacBook Air 13-inch with M1",
+    "price": 999.0,
+    "imageUrl": "https://static0.pocketlintimages.com/wordpress/wp-content/uploads/wm/161396-laptops-review-hands-on-macbook-air-review-image1-v2jzcb3rqd.jpg?w=1600&h=900&fit=crop",
+    "stock": 5
+  }
 ]

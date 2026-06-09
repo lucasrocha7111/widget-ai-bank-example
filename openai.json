@@ -1,52 +1,178 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Widget de Finanças Pessoais",
-    "description": "API para consultar saldo, investimentos e ações rápidas da conta bancária.",
+    "title": "Loja Itau API",
+    "description": "API de loja para buscar produtos, abrir detalhes e comprar itens como iPhone e AirPods.",
     "version": "1.0.0"
   },
   "servers": [
     {
-      "url": "https://SUA-URL-DO-NGROK-OU-SERVIDOR.com",
-      "description": "Servidor local ou de produção da API Bun"
+      "url": "https://SUA-URL-DA-LOJA.com",
+      "description": "Servidor da loja"
     }
   ],
   "paths": {
-    "/v1/widget/status": {
+    "/products": {
       "get": {
-        "description": "Busca o resumo financeiro atualizado da conta do usuário para exibir no widget do chat.",
-        "operationId": "getFinanceStatus",
-        "parameters": [],
+        "description": "Lista os produtos disponiveis na loja.",
+        "operationId": "listProducts",
         "responses": {
           "200": {
-            "description": "Dados financeiros retornados com sucesso.",
+            "description": "Produtos retornados com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "string" },
+                      "name": { "type": "string" },
+                      "description": { "type": "string" },
+                      "price": { "type": "number" },
+                      "imageUrl": { "type": "string" },
+                      "stock": { "type": "integer" }
+                    },
+                    "required": [
+                      "id",
+                      "name",
+                      "description",
+                      "price",
+                      "imageUrl",
+                      "stock"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/search": {
+      "get": {
+        "description": "Busca produto por linguagem natural, ex: 'quero um iphone, tem?'.",
+        "operationId": "searchProduct",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Pergunta do usuario ou nome do produto"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado da busca",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "saldo": {
-                      "type": "string",
-                      "description": "O saldo atualizado da conta formatado em Reais."
-                    },
-                    "status": {
-                      "type": "string",
-                      "description": "O estado atual da conta (ex: Conta Aberta)."
-                    },
-                    "investimentos": {
-                      "type": "integer",
-                      "description": "Quantidade de investimentos ativos na carteira."
-                    },
-                    "ultima_transacao": {
-                      "type": "string",
-                      "description": "Detalhes de tempo e autoria da última movimentação."
-                    },
-                    "acoes": {
-                      "type": "array",
-                      "items": { "type": "string" },
-                      "description": "Lista de botões de atalho ou operações permitidas."
+                    "query": { "type": "string" },
+                    "found": { "type": "boolean" },
+                    "answer": { "type": "string" },
+                    "product": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": { "type": "string" },
+                            "name": { "type": "string" },
+                            "description": { "type": "string" },
+                            "price": { "type": "number" },
+                            "imageUrl": { "type": "string" },
+                            "stock": { "type": "integer" }
+                          }
+                        },
+                        { "type": "null" }
+                      ]
                     }
-                  }
+                  },
+                  "required": ["query", "found", "answer", "product"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/{id}": {
+      "get": {
+        "description": "Retorna detalhes de um produto pelo id.",
+        "operationId": "getProductById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalhes do produto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "name": { "type": "string" },
+                    "description": { "type": "string" },
+                    "price": { "type": "number" },
+                    "imageUrl": { "type": "string" },
+                    "stock": { "type": "integer" }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "description",
+                    "price",
+                    "imageUrl",
+                    "stock"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/purchase": {
+      "post": {
+        "description": "Finaliza compra de um produto para um usuario.",
+        "operationId": "purchaseProduct",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": { "type": "string" },
+                  "productId": { "type": "string" },
+                  "usePoints": { "type": "boolean" }
+                },
+                "required": ["userId", "productId"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Compra realizada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "productId": { "type": "string" },
+                    "totalPaid": { "type": "number" },
+                    "discountPercent": { "type": "number" }
+                  },
+                  "required": ["productId", "totalPaid", "discountPercent"]
                 }
               }
             }
