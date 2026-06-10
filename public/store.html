@@ -419,120 +419,93 @@
     .modal-overlay {
       display: none;
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
       z-index: 1000;
-      animation: fadeIn 0.3s ease;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
     }
 
     .modal-overlay.active {
       display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-      }
-
-      to {
-        opacity: 1;
-      }
-    }
-
-    @keyframes slideUp {
-      from {
-        transform: translateY(20px);
-        opacity: 0;
-      }
-
-      to {
-        transform: translateY(0);
-        opacity: 1;
-      }
     }
 
     .modal-content {
+      width: min(480px, 100%);
       background: white;
-      border-radius: 16px;
-      padding: 32px;
-      max-width: 400px;
-      width: 90%;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-      animation: slideUp 0.3s ease;
+      border-radius: 20px;
+      padding: 28px 24px;
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.2);
+      animation: popIn 0.25s ease;
       text-align: center;
     }
 
+    @keyframes popIn {
+      from {
+        opacity: 0;
+        transform: translateY(18px) scale(0.98);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
     .modal-icon {
-      font-size: 48px;
-      margin-bottom: 16px;
+      font-size: 42px;
+      margin-bottom: 14px;
     }
 
     .modal-title {
-      font-size: 24px;
+      font-size: 22px;
       font-weight: 700;
       color: #333;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
     .modal-description {
-      font-size: 16px;
-      color: #666;
-      line-height: 1.5;
+      color: #555;
+      font-size: 15px;
+      line-height: 1.6;
       margin-bottom: 24px;
     }
 
     .modal-buttons {
       display: flex;
       gap: 12px;
-      margin-top: 24px;
     }
 
     .modal-btn {
       flex: 1;
       padding: 12px 16px;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
-      transition: all 0.2s ease;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      transition: all 0.18s ease;
     }
 
     .modal-btn-confirm {
       background: linear-gradient(135deg, #ff8c00 0%, #ff7300 100%);
       color: white;
-      box-shadow: 0 4px 12px rgba(255, 140, 0, 0.3);
     }
 
     .modal-btn-confirm:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(255, 140, 0, 0.4);
-    }
-
-    .modal-btn-confirm:active {
-      transform: translateY(0);
+      transform: translateY(-1px);
     }
 
     .modal-btn-cancel {
-      background: #f0f0f0;
+      background: #f5f5f5;
       color: #333;
-      border: 1px solid #e0e0e0;
     }
 
     .modal-btn-cancel:hover {
-      background: #e8e8e8;
+      transform: translateY(-1px);
     }
 
-    .modal-btn-cancel:active {
-      background: #f0f0f0;
-    }
 
     @media (max-width: 768px) {
       .header {
@@ -608,19 +581,18 @@
     </div>
   </div>
 
-  <!-- Modal de confirmação de compra -->
-  <div id="purchase-modal" class="modal-overlay">
+  <div id="purchase-modal" class="modal-overlay" onclick="if (event.target === this) closePurchaseModal();">
     <div class="modal-content">
       <div class="modal-icon">📱</div>
-      <div class="modal-title">Ir para o App</div>
-      <div class="modal-description">
-        Você será redirecionado para o app Itau para completar sua compra com segurança.
+      <div class="modal-title">Confirmar compra</div>
+      <div class="modal-description" id="modal-description">
+        Você será redirecionado para o app Itau para completar sua compra.
       </div>
       <div class="modal-buttons">
-        <button class="modal-btn modal-btn-cancel" onclick="closePurchaseModal()">
+        <button class="modal-btn modal-btn-cancel" type="button" onclick="closePurchaseModal()">
           Cancelar
         </button>
-        <button class="modal-btn modal-btn-confirm" onclick="confirmPurchase()">
+        <button class="modal-btn modal-btn-confirm" type="button" onclick="confirmPurchase()">
           Continuar
         </button>
       </div>
@@ -961,70 +933,65 @@
       }
     }
 
-    async function purchase(productId, price, discountPercent) {
-      const usePoints =
-        discountPercent > 0 &&
-        confirm(`🎉 Usar ${discountPercent}% de desconto com seus pontos?`);
+    function purchase(productId, price, discountPercent) {
+      const product = products.find((p) => p.id === productId);
+      if (!product) {
+        console.error("[Store] Produto não encontrado para compra:", productId);
+        return;
+      }
 
-      // Armazenar dados da compra pendente
-      pendingPurchase = { productId, price, discountPercent, usePoints };
+      pendingPurchase = {
+        productId,
+        price,
+        discountPercent,
+        productName: product.name,
+      };
 
-      // Abrir modal
-      const modal = document.getElementById("purchase-modal");
-      modal.classList.add("active");
+      const description = document.getElementById("modal-description");
+      description.textContent = `Você será redirecionado para ${product.name} no app Itau para completar a compra.`;
+
+      document.getElementById("purchase-modal").classList.add("active");
     }
 
     function closePurchaseModal() {
-      const modal = document.getElementById("purchase-modal");
-      modal.classList.remove("active");
+      document.getElementById("purchase-modal").classList.remove("active");
       pendingPurchase = null;
     }
 
-    // Fechar modal ao clicar no overlay
-    document.addEventListener("DOMContentLoaded", () => {
-      const modal = document.getElementById("purchase-modal");
-      modal.addEventListener("click", (e) => {
-        if (e.target === modal) {
-          closePurchaseModal();
-        }
-      });
-    });
-
-    async function confirmPurchase() {
+    function confirmPurchase() {
       if (!pendingPurchase) return;
 
-      const { productId, price, discountPercent, usePoints } = pendingPurchase;
+      // Prefer deeplink by productId (more stable). Open in same context so OS can handle app intent.
+      const deeplink = `bankpoc://product/${encodeURIComponent(pendingPurchase.productId)}`;
 
+      // Try opening the deeplink in a new tab (user-triggered, should avoid popup blockers).
       try {
-        const resp = await fetch(`${SERVER_ORIGIN}/purchase`, {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ userId: USER_ID, productId, usePoints }),
-        });
-
-        const result = await resp.json();
-
-        if (result.error) {
-          showFeedback(productId, `❌ Erro: ${result.error}`, false);
-        } else {
-          user = result.user;
-          document.getElementById("user-name").textContent = user.name;
-          document.getElementById("points-badge").textContent =
-            `${user.points} pontos`;
-          const totalPaid = result.totalPaid;
-          const saved = price - totalPaid;
-          showFeedback(
-            productId,
-            `✅ Compra realizada! Pagou: ${formatPrice(totalPaid)}${usePoints ? ` (Economizou ${formatPrice(saved)})` : ""}`,
-            true,
-          );
-          renderCarousel();
+        const opened = window.open(deeplink, '_blank', 'noopener,noreferrer');
+        if (!opened) {
+          // If window.open was blocked, fallback to programmatic anchor click in same context.
+          const a = document.createElement('a');
+          a.href = deeplink;
+          a.rel = 'noopener noreferrer';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
         }
       } catch (err) {
-        console.error(err);
-        showFeedback(productId, "❌ Falha na compra", false);
+        // Last-resort fallback: try assigning location (may be blocked in some webviews).
+        try {
+          window.location.href = deeplink;
+        } catch (e) {
+          console.error('[Store] Falha ao abrir deeplink:', e);
+        }
       }
 
+      // If the app doesn't open, open the web fallback after 1200ms.
+      const fallbackTimer = setTimeout(() => {
+        const webFallback = `https://poc-itau.com.br/product/${encodeURIComponent(pendingPurchase.productName)}`;
+        window.open(webFallback, '_blank', 'noopener,noreferrer');
+      }, 1200);
+
+      // Close modal and clear pending (keep timer running briefly to allow deeplink).
       closePurchaseModal();
     }
 
