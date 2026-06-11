@@ -23661,275 +23661,214 @@ var require_jsx_dev_runtime = __commonJS((exports, module) => {
   }
 });
 
-// src/store-widget.tsx
+// src/todo-widget.tsx
 var import_client = __toESM(require_client(), 1);
 
-// src/components/store/StoreApp.tsx
+// src/components/todo/TodoApp.tsx
 var import_react = __toESM(require_react(), 1);
 
-// src/utils/urls.ts
-var serverOrigin = (window.__SERVER_ORIGIN || "").replace(/\/$/, "");
-var apiOrigin = serverOrigin || window.location.origin;
-var purchaseDeepLinkTemplate = window.__STORE_PURCHASE_DEEPLINK || `${apiOrigin}/store?productId={{productId}}&usePoints={{usePoints}}`;
-function buildPurchaseLink(productId, usePoints) {
-  let link = purchaseDeepLinkTemplate;
-  if (link.includes("{{productId}}")) {
-    link = link.replaceAll("{{productId}}", encodeURIComponent(productId));
-  } else {
-    const separator = link.includes("?") ? "&" : "?";
-    link = `${link}${separator}productId=${encodeURIComponent(productId)}`;
-  }
-  if (link.includes("{{usePoints}}")) {
-    link = link.replaceAll("{{usePoints}}", usePoints ? "1" : "0");
-  }
-  return link;
+// src/utils/mcpBridge.ts
+function createMcpBridge(config) {
+  const pendingRequests = new Map;
+  let rpcId = 0;
+  const rpcNotify = (method, params) => {
+    window.parent.postMessage({ jsonrpc: "2.0", method, params }, "*");
+  };
+  const rpcRequest = (method, params) => new Promise((resolve, reject) => {
+    const id = ++rpcId;
+    pendingRequests.set(id, { resolve, reject });
+    window.parent.postMessage({ jsonrpc: "2.0", id, method, params }, "*");
+  });
+  let readyPromise = null;
+  const handleMessage = (event) => {
+    if (event.source !== window.parent)
+      return;
+    const message = event.data;
+    if (!message || message.jsonrpc !== "2.0")
+      return;
+    if (typeof message.id === "number") {
+      const pending = pendingRequests.get(message.id);
+      if (!pending)
+        return;
+      pendingRequests.delete(message.id);
+      if (message.error) {
+        pending.reject(message.error);
+        return;
+      }
+      pending.resolve(message.result);
+    }
+  };
+  const startBridge = async () => {
+    window.addEventListener("message", handleMessage, { passive: true });
+    readyPromise = (async () => {
+      await rpcRequest("ui/initialize", {
+        appInfo: { name: config.appName, version: config.appVersion },
+        appCapabilities: {},
+        protocolVersion: config.protocolVersion ?? "2026-01-26"
+      });
+      rpcNotify("ui/notifications/initialized", {});
+    })();
+    return readyPromise;
+  };
+  const stopBridge = () => {
+    window.removeEventListener("message", handleMessage);
+    pendingRequests.clear();
+    readyPromise = null;
+  };
+  return {
+    startBridge,
+    stopBridge,
+    async callTool(name, args) {
+      if (!readyPromise) {
+        throw new Error("MCP bridge has not been started.");
+      }
+      await readyPromise;
+      return rpcRequest("tools/call", { name, arguments: args });
+    }
+  };
 }
 
-// src/utils/currency.ts
-function currency(value) {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    maximumFractionDigits: 2
-  }).format(value);
-}
-
-// src/components/store/ProductCard.tsx
+// src/components/todo/TodoItem.tsx
 var jsx_dev_runtime = __toESM(require_jsx_dev_runtime(), 1);
-function ProductCard({
-  product,
-  busy,
-  detailUrl,
-  onPurchase
-}) {
-  return /* @__PURE__ */ jsx_dev_runtime.jsxDEV("section", {
-    className: "product",
-    children: [
-      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("img", {
-        alt: product.name,
-        src: product.imageUrl
-      }, undefined, false, undefined, this),
-      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-        children: [
-          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("h2", {
-            children: product.name
-          }, undefined, false, undefined, this),
-          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
-            children: product.description
-          }, undefined, false, undefined, this),
-          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
-            className: "price",
-            children: currency(product.price)
-          }, undefined, false, undefined, this),
-          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
-            className: "stock",
-            children: [
-              "Estoque: ",
-              product.stock
-            ]
-          }, undefined, true, undefined, this),
-          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-            className: "actions",
-            children: [
-              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("button", {
-                type: "button",
-                disabled: busy || product.stock <= 0,
-                onClick: () => onPurchase(false),
-                children: "Comprar"
-              }, undefined, false, undefined, this),
-              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("button", {
-                type: "button",
-                className: "secondary",
-                disabled: busy || product.stock <= 0,
-                onClick: () => onPurchase(true),
-                children: "Comprar com pontos"
-              }, undefined, false, undefined, this),
-              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("a", {
-                href: detailUrl,
-                target: "_blank",
-                rel: "noreferrer",
-                children: "Ver detalhes"
-              }, undefined, false, undefined, this)
-            ]
-          }, undefined, true, undefined, this)
-        ]
-      }, undefined, true, undefined, this)
-    ]
-  }, undefined, true, undefined, this);
-}
-
-// src/components/store/PurchaseModal.tsx
-var jsx_dev_runtime2 = __toESM(require_jsx_dev_runtime(), 1);
-function PurchaseModal({
-  productName,
-  onCancel,
-  onConfirm
-}) {
-  return /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
-    className: "modal-overlay",
-    role: "dialog",
-    "aria-modal": "true",
-    children: /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
-      className: "modal-card",
+function TodoItem({ task, busy, onToggle }) {
+  return /* @__PURE__ */ jsx_dev_runtime.jsxDEV("li", {
+    "data-id": task.id,
+    "data-completed": String(task.completed),
+    "data-busy": String(busy),
+    children: /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
+      style: { display: "flex", alignItems: "center", gap: "10px" },
       children: [
-        /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("h3", {
-          children: "Confirmar compra"
+        /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
+          type: "checkbox",
+          checked: task.completed,
+          disabled: busy,
+          onChange: (event) => {
+            if (event.target.checked) {
+              onToggle(task.id);
+            }
+          }
         }, undefined, false, undefined, this),
-        /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("p", {
-          children: [
-            "Você será redirecionado para o app Itau para concluir a compra de ",
-            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("strong", {
-              children: productName
-            }, undefined, false, undefined, this),
-            "."
-          ]
-        }, undefined, true, undefined, this),
-        /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
-          className: "modal-actions",
-          children: [
-            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("button", {
-              type: "button",
-              className: "secondary",
-              onClick: onCancel,
-              children: "Não"
-            }, undefined, false, undefined, this),
-            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("button", {
-              type: "button",
-              onClick: onConfirm,
-              children: "Sim, continuar"
-            }, undefined, false, undefined, this)
-          ]
-        }, undefined, true, undefined, this)
+        /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
+          children: task.title
+        }, undefined, false, undefined, this)
       ]
     }, undefined, true, undefined, this)
   }, undefined, false, undefined, this);
 }
 
-// src/components/store/StoreApp.tsx
+// src/components/todo/TodoList.tsx
+var jsx_dev_runtime2 = __toESM(require_jsx_dev_runtime(), 1);
+function TodoList({ tasks, busyIds, onToggle }) {
+  return /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("ul", {
+    children: tasks.map((task) => /* @__PURE__ */ jsx_dev_runtime2.jsxDEV(TodoItem, {
+      task,
+      busy: busyIds.has(task.id),
+      onToggle
+    }, task.id, false, undefined, this))
+  }, undefined, false, undefined, this);
+}
+
+// src/components/todo/TodoApp.tsx
 var jsx_dev_runtime3 = __toESM(require_jsx_dev_runtime(), 1);
-function StoreApp() {
-  const [query, setQuery] = import_react.useState("");
-  const [searchAnswer, setSearchAnswer] = import_react.useState("");
-  const [selected, setSelected] = import_react.useState(null);
-  const [busy, setBusy] = import_react.useState(false);
-  const [feedback, setFeedback] = import_react.useState("");
-  const [feedbackKind, setFeedbackKind] = import_react.useState("ok");
-  const [modalOpen, setModalOpen] = import_react.useState(false);
-  const [purchaseWithPoints, setPurchaseWithPoints] = import_react.useState(false);
-  const detailUrl = import_react.useMemo(() => {
-    if (!selected)
-      return "";
-    return `${apiOrigin}/store/product/${selected.id}`;
-  }, [selected]);
-  async function askProduct(event) {
-    event.preventDefault();
-    const text = query.trim();
-    if (!text)
-      return;
-    setBusy(true);
-    setFeedback("");
-    setSearchAnswer("");
-    try {
-      const response = await fetch(`${apiOrigin}/products/search?q=${encodeURIComponent(text)}`);
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data?.error || "Falha na busca");
+function TodoApp() {
+  const [tasks, setTasks] = import_react.useState([]);
+  const [title, setTitle] = import_react.useState("");
+  const [isAdding, setIsAdding] = import_react.useState(false);
+  const [busyTodoIds, setBusyTodoIds] = import_react.useState(new Set);
+  const bridge = import_react.useMemo(() => createMcpBridge({ appName: "todo-widget", appVersion: "0.1.0" }), []);
+  import_react.useEffect(() => {
+    const handleToolResult = (event) => {
+      if (event.source !== window.parent)
+        return;
+      const message = event.data;
+      if (!message || message.jsonrpc !== "2.0")
+        return;
+      if (message.method === "ui/notifications/tool-result") {
+        const response = message.params;
+        if (response?.structuredContent?.tasks) {
+          setTasks(response.structuredContent.tasks);
+        }
       }
-      setSearchAnswer(data.answer || "Busca concluída.");
-      setSelected(data.product || null);
+    };
+    window.addEventListener("message", handleToolResult, { passive: true });
+    bridge.startBridge().catch((error) => {
+      console.error("Unable to initialize MCP bridge:", error);
+    });
+    return () => {
+      window.removeEventListener("message", handleToolResult);
+      bridge.stopBridge();
+    };
+  }, [bridge]);
+  const callTodoTool = async (name, payload) => {
+    return bridge.callTool(name, payload);
+  };
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const trimmed = title.trim();
+    if (!trimmed || isAdding)
+      return;
+    setIsAdding(true);
+    try {
+      await callTodoTool("add_todo", { title: trimmed });
+      setTitle("");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Não foi possível buscar produtos.";
-      setSearchAnswer(message);
-      setSelected(null);
-      setFeedbackKind("err");
-      setFeedback(message);
+      console.error("Failed to add todo:", error);
     } finally {
-      setBusy(false);
+      setIsAdding(false);
     }
-  }
-  function goToStorePurchase(usePoints) {
-    if (!selected)
+  };
+  const handleToggle = async (id) => {
+    if (busyTodoIds.has(id))
       return;
-    setPurchaseWithPoints(usePoints);
-    setModalOpen(true);
-  }
-  function closePurchaseModal() {
-    setModalOpen(false);
-  }
-  function confirmPurchase() {
-    if (!selected)
-      return;
-    const link = buildPurchaseLink(selected.id, purchaseWithPoints);
-    setFeedbackKind("ok");
-    setFeedback("Redirecionando para finalizar a compra no app...");
-    setModalOpen(false);
-    window.open(link, "_blank", "noopener,noreferrer");
-  }
-  return /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
-    className: "shell",
+    setBusyTodoIds((current) => new Set(current).add(id));
+    try {
+      await callTodoTool("complete_todo", { id });
+    } catch (error) {
+      console.error("Failed to complete todo:", error);
+    } finally {
+      setBusyTodoIds((current) => {
+        const next = new Set(current);
+        next.delete(id);
+        return next;
+      });
+    }
+  };
+  return /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("main", {
     children: [
-      /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("header", {
-        className: "hero",
+      /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("h2", {
+        children: "Todo list"
+      }, undefined, false, undefined, this),
+      /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("form", {
+        id: "add-form",
+        autoComplete: "off",
+        onSubmit: handleSubmit,
         children: [
-          /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("p", {
-            className: "kicker",
-            children: "Itau Benefits"
+          /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("input", {
+            id: "todo-input",
+            name: "title",
+            placeholder: "Add a task",
+            value: title,
+            onChange: (event) => setTitle(event.target.value)
           }, undefined, false, undefined, this),
-          /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("h1", {
-            children: "Loja com pontos no app"
-          }, undefined, false, undefined, this),
-          /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("p", {
-            children: "Pesquise por linguagem natural e finalize com desconto por pontos."
+          /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("button", {
+            type: "submit",
+            disabled: isAdding,
+            children: isAdding ? "Adding…" : "Add"
           }, undefined, false, undefined, this)
         ]
       }, undefined, true, undefined, this),
-      /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("main", {
-        className: "card",
-        children: [
-          /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("form", {
-            className: "search",
-            onSubmit: askProduct,
-            children: [
-              /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("input", {
-                value: query,
-                onChange: (event) => setQuery(event.target.value),
-                placeholder: "Ex: Quero comprar um iPhone"
-              }, undefined, false, undefined, this),
-              /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("button", {
-                disabled: busy,
-                type: "submit",
-                children: busy ? "Buscando..." : "Buscar"
-              }, undefined, false, undefined, this)
-            ]
-          }, undefined, true, undefined, this),
-          searchAnswer ? /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("p", {
-            className: "answer",
-            children: searchAnswer
-          }, undefined, false, undefined, this) : null,
-          selected ? /* @__PURE__ */ jsx_dev_runtime3.jsxDEV(ProductCard, {
-            product: selected,
-            busy,
-            detailUrl,
-            onPurchase: goToStorePurchase
-          }, undefined, false, undefined, this) : null,
-          feedback ? /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("p", {
-            className: feedbackKind === "ok" ? "feedback ok" : "feedback err",
-            children: feedback
-          }, undefined, false, undefined, this) : null,
-          modalOpen ? /* @__PURE__ */ jsx_dev_runtime3.jsxDEV(PurchaseModal, {
-            productName: selected?.name ?? "produto",
-            onCancel: closePurchaseModal,
-            onConfirm: confirmPurchase
-          }, undefined, false, undefined, this) : null
-        ]
-      }, undefined, true, undefined, this)
+      /* @__PURE__ */ jsx_dev_runtime3.jsxDEV(TodoList, {
+        tasks,
+        busyIds: busyTodoIds,
+        onToggle: handleToggle
+      }, undefined, false, undefined, this)
     ]
   }, undefined, true, undefined, this);
 }
 
-// src/store-widget.tsx
+// src/todo-widget.tsx
 var jsx_dev_runtime4 = __toESM(require_jsx_dev_runtime(), 1);
 var rootElement = document.getElementById("root");
 if (rootElement) {
-  import_client.createRoot(rootElement).render(/* @__PURE__ */ jsx_dev_runtime4.jsxDEV(StoreApp, {}, undefined, false, undefined, this));
+  import_client.createRoot(rootElement).render(/* @__PURE__ */ jsx_dev_runtime4.jsxDEV(TodoApp, {}, undefined, false, undefined, this));
 }

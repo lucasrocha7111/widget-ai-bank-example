@@ -23661,95 +23661,222 @@ var require_jsx_dev_runtime = __commonJS((exports, module) => {
   }
 });
 
-// src/store-widget.tsx
+// src/product-detail-widget.tsx
 var import_client = __toESM(require_client(), 1);
 
-// src/components/store/StoreApp.tsx
+// src/components/product-detail/ProductDetailApp.tsx
 var import_react = __toESM(require_react(), 1);
+
+// src/utils/currency.ts
+function formatPrice(value) {
+  return `$${Number(value).toFixed(2)}`;
+}
+function computeDiscount(points) {
+  const blocks = Math.floor(points / 100);
+  return Math.min(20, blocks * 5);
+}
 
 // src/utils/urls.ts
 var serverOrigin = (window.__SERVER_ORIGIN || "").replace(/\/$/, "");
 var apiOrigin = serverOrigin || window.location.origin;
 var purchaseDeepLinkTemplate = window.__STORE_PURCHASE_DEEPLINK || `${apiOrigin}/store?productId={{productId}}&usePoints={{usePoints}}`;
-function buildPurchaseLink(productId, usePoints) {
-  let link = purchaseDeepLinkTemplate;
-  if (link.includes("{{productId}}")) {
-    link = link.replaceAll("{{productId}}", encodeURIComponent(productId));
-  } else {
-    const separator = link.includes("?") ? "&" : "?";
-    link = `${link}${separator}productId=${encodeURIComponent(productId)}`;
+function resolveProductId() {
+  const parts = window.location.pathname.split("/").filter(Boolean);
+  if (parts.length >= 3 && parts[0] === "store" && parts[1] === "product") {
+    return parts[2];
   }
-  if (link.includes("{{usePoints}}")) {
-    link = link.replaceAll("{{usePoints}}", usePoints ? "1" : "0");
-  }
-  return link;
+  const query = new URLSearchParams(window.location.search);
+  const queryId = query.get("id") || query.get("productId");
+  if (queryId)
+    return queryId;
+  return window.__PRESELECTED_PRODUCT_ID ?? "";
 }
 
-// src/utils/currency.ts
-function currency(value) {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    maximumFractionDigits: 2
-  }).format(value);
-}
-
-// src/components/store/ProductCard.tsx
+// src/components/product-detail/ProductSpecRow.tsx
 var jsx_dev_runtime = __toESM(require_jsx_dev_runtime(), 1);
-function ProductCard({
-  product,
-  busy,
-  detailUrl,
-  onPurchase
-}) {
-  return /* @__PURE__ */ jsx_dev_runtime.jsxDEV("section", {
-    className: "product",
+function ProductSpecRow({ label, value }) {
+  return /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+    className: "row",
     children: [
-      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("img", {
-        alt: product.name,
-        src: product.imageUrl
+      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
+        children: label
       }, undefined, false, undefined, this),
-      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
+        children: value
+      }, undefined, false, undefined, this)
+    ]
+  }, undefined, true, undefined, this);
+}
+
+// src/components/product-detail/ProductDetailApp.tsx
+var jsx_dev_runtime2 = __toESM(require_jsx_dev_runtime(), 1);
+var initialProduct = window.__INITIAL_PRODUCT ?? null;
+var initialUser = window.__INITIAL_USER ?? null;
+function ProductDetailApp() {
+  const productId = resolveProductId();
+  const [product, setProduct] = import_react.useState(initialProduct && initialProduct.id === productId ? initialProduct : null);
+  const [user, setUser] = import_react.useState(initialProduct && initialProduct.id === productId ? initialUser : null);
+  const [error, setError] = import_react.useState(null);
+  const [loading, setLoading] = import_react.useState(true);
+  import_react.useEffect(() => {
+    if (!productId) {
+      setError("Nenhum produto foi informado para abrir os detalhes.");
+      setLoading(false);
+      return;
+    }
+    let active = true;
+    const controller = new AbortController;
+    const loadProduct = async () => {
+      try {
+        const [productResponse, userResponse] = await Promise.all([
+          fetch(`${apiOrigin}/products/${encodeURIComponent(productId)}`, {
+            signal: controller.signal
+          }),
+          fetch(`${apiOrigin}/users/user-1`, { signal: controller.signal })
+        ]);
+        const productData = await productResponse.json();
+        const userData = await userResponse.json();
+        if (!active)
+          return;
+        if (productResponse.ok && !productData?.error) {
+          setProduct(productData);
+        }
+        if (userResponse.ok) {
+          setUser(userData);
+        }
+        if (!productResponse.ok || productData?.error) {
+          throw new Error(productData?.error || "Falha ao carregar produto");
+        }
+      } catch (loadError) {
+        if (!active)
+          return;
+        if (!product) {
+          setError(loadError instanceof Error ? loadError.message : "Não foi possível carregar o produto.");
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+    if (!product || product.id !== productId) {
+      loadProduct();
+    } else {
+      setLoading(false);
+    }
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [productId]);
+  const discountPercent = computeDiscount(user?.points ?? 0);
+  const discountedPrice = product ? product.price * (1 - discountPercent / 100) : 0;
+  const stockText = product?.stock === 0 ? "Sem estoque" : "Em estoque";
+  const stockClass = product?.stock === 0 ? "badge out-stock" : "badge in-stock";
+  function goBack() {
+    window.location.href = `${serverOrigin}/store`;
+  }
+  function goToStorePurchase() {
+    if (!product) {
+      window.open(`${serverOrigin}/store`, "_blank", "noopener,noreferrer");
+      return;
+    }
+    window.open(`${serverOrigin}/store?productId=${encodeURIComponent(product.id)}`, "_blank", "noopener,noreferrer");
+  }
+  return /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+    className: "shell",
+    children: [
+      /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+        className: "topbar",
+        children: /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("button", {
+          className: "btn btn-back",
+          type: "button",
+          onClick: goBack,
+          children: "Voltar para loja"
+        }, undefined, false, undefined, this)
+      }, undefined, false, undefined, this),
+      /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+        className: "panel",
         children: [
-          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("h2", {
-            children: product.name
-          }, undefined, false, undefined, this),
-          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
-            children: product.description
-          }, undefined, false, undefined, this),
-          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
-            className: "price",
-            children: currency(product.price)
-          }, undefined, false, undefined, this),
-          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
-            className: "stock",
+          /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+            className: "hero",
             children: [
-              "Estoque: ",
-              product.stock
+              /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("h1", {
+                children: loading ? "Carregando produto..." : product?.name ?? "Produto não encontrado"
+              }, undefined, false, undefined, this),
+              /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("p", {
+                children: loading ? "Buscando detalhes completos" : "Tela específica do item selecionado"
+              }, undefined, false, undefined, this)
             ]
           }, undefined, true, undefined, this),
-          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-            className: "actions",
+          /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+            className: "content",
             children: [
-              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("button", {
-                type: "button",
-                disabled: busy || product.stock <= 0,
-                onClick: () => onPurchase(false),
-                children: "Comprar"
+              /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                className: "photo-wrap",
+                children: /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("img", {
+                  src: product?.imageUrl ?? "",
+                  alt: product?.name ?? "Produto"
+                }, undefined, false, undefined, this)
               }, undefined, false, undefined, this),
-              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("button", {
-                type: "button",
-                className: "secondary",
-                disabled: busy || product.stock <= 0,
-                onClick: () => onPurchase(true),
-                children: "Comprar com pontos"
-              }, undefined, false, undefined, this),
-              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("a", {
-                href: detailUrl,
-                target: "_blank",
-                rel: "noreferrer",
-                children: "Ver detalhes"
-              }, undefined, false, undefined, this)
+              /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                className: "specs",
+                children: [
+                  /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                    className: "price-block",
+                    children: [
+                      /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                        className: "price-original",
+                        children: discountPercent > 0 ? formatPrice(product?.price ?? 0) : ""
+                      }, undefined, false, undefined, this),
+                      /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                        className: "price-final",
+                        children: formatPrice(discountedPrice)
+                      }, undefined, false, undefined, this),
+                      /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                        className: "discount-note",
+                        children: product ? discountPercent > 0 ? `${discountPercent}% OFF para você com ${user?.points ?? 0} pontos. Economia de ${formatPrice(product.price - discountedPrice)}.` : `Sem desconto no momento. Você tem ${user?.points ?? 0} pontos.` : "Calculando desconto..."
+                      }, undefined, false, undefined, this)
+                    ]
+                  }, undefined, true, undefined, this),
+                  /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                    id: "stock-badge",
+                    className: stockClass,
+                    children: stockText
+                  }, undefined, false, undefined, this),
+                  /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                    className: "list",
+                    children: [
+                      /* @__PURE__ */ jsx_dev_runtime2.jsxDEV(ProductSpecRow, {
+                        label: "ID",
+                        value: product?.id ?? "-"
+                      }, undefined, false, undefined, this),
+                      /* @__PURE__ */ jsx_dev_runtime2.jsxDEV(ProductSpecRow, {
+                        label: "Descrição",
+                        value: product?.description ?? "-"
+                      }, undefined, false, undefined, this),
+                      /* @__PURE__ */ jsx_dev_runtime2.jsxDEV(ProductSpecRow, {
+                        label: "Estoque",
+                        value: product ? `${product.stock} unidade(s)` : "-"
+                      }, undefined, false, undefined, this)
+                    ]
+                  }, undefined, true, undefined, this),
+                  /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                    className: "footer",
+                    children: /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("button", {
+                      className: "btn btn-buy",
+                      type: "button",
+                      onClick: goToStorePurchase,
+                      children: "Comprar na loja"
+                    }, undefined, false, undefined, this)
+                  }, undefined, false, undefined, this),
+                  /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                    className: "error",
+                    style: { display: error ? "block" : "none" },
+                    children: error
+                  }, undefined, false, undefined, this)
+                ]
+              }, undefined, true, undefined, this)
             ]
           }, undefined, true, undefined, this)
         ]
@@ -23758,178 +23885,9 @@ function ProductCard({
   }, undefined, true, undefined, this);
 }
 
-// src/components/store/PurchaseModal.tsx
-var jsx_dev_runtime2 = __toESM(require_jsx_dev_runtime(), 1);
-function PurchaseModal({
-  productName,
-  onCancel,
-  onConfirm
-}) {
-  return /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
-    className: "modal-overlay",
-    role: "dialog",
-    "aria-modal": "true",
-    children: /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
-      className: "modal-card",
-      children: [
-        /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("h3", {
-          children: "Confirmar compra"
-        }, undefined, false, undefined, this),
-        /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("p", {
-          children: [
-            "Você será redirecionado para o app Itau para concluir a compra de ",
-            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("strong", {
-              children: productName
-            }, undefined, false, undefined, this),
-            "."
-          ]
-        }, undefined, true, undefined, this),
-        /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
-          className: "modal-actions",
-          children: [
-            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("button", {
-              type: "button",
-              className: "secondary",
-              onClick: onCancel,
-              children: "Não"
-            }, undefined, false, undefined, this),
-            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("button", {
-              type: "button",
-              onClick: onConfirm,
-              children: "Sim, continuar"
-            }, undefined, false, undefined, this)
-          ]
-        }, undefined, true, undefined, this)
-      ]
-    }, undefined, true, undefined, this)
-  }, undefined, false, undefined, this);
-}
-
-// src/components/store/StoreApp.tsx
+// src/product-detail-widget.tsx
 var jsx_dev_runtime3 = __toESM(require_jsx_dev_runtime(), 1);
-function StoreApp() {
-  const [query, setQuery] = import_react.useState("");
-  const [searchAnswer, setSearchAnswer] = import_react.useState("");
-  const [selected, setSelected] = import_react.useState(null);
-  const [busy, setBusy] = import_react.useState(false);
-  const [feedback, setFeedback] = import_react.useState("");
-  const [feedbackKind, setFeedbackKind] = import_react.useState("ok");
-  const [modalOpen, setModalOpen] = import_react.useState(false);
-  const [purchaseWithPoints, setPurchaseWithPoints] = import_react.useState(false);
-  const detailUrl = import_react.useMemo(() => {
-    if (!selected)
-      return "";
-    return `${apiOrigin}/store/product/${selected.id}`;
-  }, [selected]);
-  async function askProduct(event) {
-    event.preventDefault();
-    const text = query.trim();
-    if (!text)
-      return;
-    setBusy(true);
-    setFeedback("");
-    setSearchAnswer("");
-    try {
-      const response = await fetch(`${apiOrigin}/products/search?q=${encodeURIComponent(text)}`);
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data?.error || "Falha na busca");
-      }
-      setSearchAnswer(data.answer || "Busca concluída.");
-      setSelected(data.product || null);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Não foi possível buscar produtos.";
-      setSearchAnswer(message);
-      setSelected(null);
-      setFeedbackKind("err");
-      setFeedback(message);
-    } finally {
-      setBusy(false);
-    }
-  }
-  function goToStorePurchase(usePoints) {
-    if (!selected)
-      return;
-    setPurchaseWithPoints(usePoints);
-    setModalOpen(true);
-  }
-  function closePurchaseModal() {
-    setModalOpen(false);
-  }
-  function confirmPurchase() {
-    if (!selected)
-      return;
-    const link = buildPurchaseLink(selected.id, purchaseWithPoints);
-    setFeedbackKind("ok");
-    setFeedback("Redirecionando para finalizar a compra no app...");
-    setModalOpen(false);
-    window.open(link, "_blank", "noopener,noreferrer");
-  }
-  return /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
-    className: "shell",
-    children: [
-      /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("header", {
-        className: "hero",
-        children: [
-          /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("p", {
-            className: "kicker",
-            children: "Itau Benefits"
-          }, undefined, false, undefined, this),
-          /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("h1", {
-            children: "Loja com pontos no app"
-          }, undefined, false, undefined, this),
-          /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("p", {
-            children: "Pesquise por linguagem natural e finalize com desconto por pontos."
-          }, undefined, false, undefined, this)
-        ]
-      }, undefined, true, undefined, this),
-      /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("main", {
-        className: "card",
-        children: [
-          /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("form", {
-            className: "search",
-            onSubmit: askProduct,
-            children: [
-              /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("input", {
-                value: query,
-                onChange: (event) => setQuery(event.target.value),
-                placeholder: "Ex: Quero comprar um iPhone"
-              }, undefined, false, undefined, this),
-              /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("button", {
-                disabled: busy,
-                type: "submit",
-                children: busy ? "Buscando..." : "Buscar"
-              }, undefined, false, undefined, this)
-            ]
-          }, undefined, true, undefined, this),
-          searchAnswer ? /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("p", {
-            className: "answer",
-            children: searchAnswer
-          }, undefined, false, undefined, this) : null,
-          selected ? /* @__PURE__ */ jsx_dev_runtime3.jsxDEV(ProductCard, {
-            product: selected,
-            busy,
-            detailUrl,
-            onPurchase: goToStorePurchase
-          }, undefined, false, undefined, this) : null,
-          feedback ? /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("p", {
-            className: feedbackKind === "ok" ? "feedback ok" : "feedback err",
-            children: feedback
-          }, undefined, false, undefined, this) : null,
-          modalOpen ? /* @__PURE__ */ jsx_dev_runtime3.jsxDEV(PurchaseModal, {
-            productName: selected?.name ?? "produto",
-            onCancel: closePurchaseModal,
-            onConfirm: confirmPurchase
-          }, undefined, false, undefined, this) : null
-        ]
-      }, undefined, true, undefined, this)
-    ]
-  }, undefined, true, undefined, this);
-}
-
-// src/store-widget.tsx
-var jsx_dev_runtime4 = __toESM(require_jsx_dev_runtime(), 1);
 var rootElement = document.getElementById("root");
 if (rootElement) {
-  import_client.createRoot(rootElement).render(/* @__PURE__ */ jsx_dev_runtime4.jsxDEV(StoreApp, {}, undefined, false, undefined, this));
+  import_client.createRoot(rootElement).render(/* @__PURE__ */ jsx_dev_runtime3.jsxDEV(ProductDetailApp, {}, undefined, false, undefined, this));
 }

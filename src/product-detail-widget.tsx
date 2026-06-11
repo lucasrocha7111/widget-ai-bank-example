@@ -1,8 +1,8 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import StoreApp from "./components/store/StoreApp";
+import ProductDetailApp from "./components/product-detail/ProductDetailApp";
 
 const rootElement = document.getElementById("root");
 if (rootElement) {
-  createRoot(rootElement).render(<StoreApp />);
+    createRoot(rootElement).render(<ProductDetailApp />);
 }

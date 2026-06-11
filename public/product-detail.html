@@ -1,9 +1,8 @@
 <!doctype html>
-<html>
-
+<html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Detalhe do Produto</title>
   <style>
     * {
@@ -207,199 +206,14 @@
 </head>
 
 <body>
-  <div class="shell">
-    <div class="topbar">
-      <button class="btn btn-back" onclick="goBack()">
-        Voltar para loja
-      </button>
-    </div>
-
-    <div class="panel">
-      <div class="hero">
-        <h1 id="title">Carregando produto...</h1>
-        <p id="subtitle">Buscando detalhes completos</p>
-      </div>
-
-      <div class="content">
-        <div class="photo-wrap">
-          <img id="product-image" alt="Produto" />
-        </div>
-
-        <div class="specs">
-          <div class="price-block">
-            <div class="price-original" id="price-original"></div>
-            <div class="price-final" id="price-final">$0.00</div>
-            <div class="discount-note" id="discount-note">
-              Calculando desconto...
-            </div>
-          </div>
-          <div id="stock-badge" class="badge in-stock">Em estoque</div>
-
-          <div class="list">
-            <div class="row">
-              <span>ID</span><span id="product-id">-</span>
-            </div>
-            <div class="row">
-              <span>Descricao</span><span id="description">-</span>
-            </div>
-            <div class="row">
-              <span>Estoque</span><span id="stock">-</span>
-            </div>
-          </div>
-
-          <div class="footer">
-            <button class="btn btn-buy" onclick="goToStorePurchase()">
-              Comprar na loja
-            </button>
-          </div>
-          <div class="error" id="error"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
+  <div id="root"></div>
   <script>
-    const SERVER_ORIGIN = "{{SERVER_ORIGIN}}";
-    const PRESELECTED_PRODUCT_ID = "{{PRODUCT_ID}}";
-    const INITIAL_PRODUCT = {{ PRODUCT_DATA }};
-    const INITIAL_USER = {{ USER_DATA }};
-    const USER_ID = "user-1";
-    let currentProductId = null;
-
-    function formatPrice(value) {
-      return `$${Number(value).toFixed(2)}`;
-    }
-
-    function getProductIdFromPath() {
-      const parts = window.location.pathname.split("/").filter(Boolean);
-      if (
-        parts.length >= 3 &&
-        parts[0] === "store" &&
-        parts[1] === "product"
-      ) {
-        return parts[2];
-      }
-      return "";
-    }
-
-    function resolveProductId() {
-      const fromPath = getProductIdFromPath();
-      if (fromPath) return fromPath;
-      const fromQuery = new URLSearchParams(window.location.search).get("id");
-      if (fromQuery) return fromQuery;
-      if (PRESELECTED_PRODUCT_ID) return PRESELECTED_PRODUCT_ID;
-      return "";
-    }
-
-    function computeDiscount(points) {
-      const blocks = Math.floor(Number(points || 0) / 100);
-      return Math.min(20, blocks * 5);
-    }
-
-    async function fetchJsonWithTimeout(url, timeoutMs = 5000) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-      try {
-        const resp = await fetch(url, { signal: controller.signal });
-        const json = await resp.json();
-        return { ok: resp.ok, json };
-      } finally {
-        clearTimeout(timeoutId);
-      }
-    }
-
-    function renderProduct(data, userData) {
-      const userPoints = Number(userData?.points || 0);
-      const discountPercent = computeDiscount(userPoints);
-      const discountedPrice = data.price * (1 - discountPercent / 100);
-      const savedValue = data.price - discountedPrice;
-
-      document.getElementById("title").textContent = data.name;
-      document.getElementById("subtitle").textContent =
-        "Tela especifica do item selecionado";
-      document.getElementById("product-image").src = data.imageUrl;
-      const originalPriceEl = document.getElementById("price-original");
-      const finalPriceEl = document.getElementById("price-final");
-      const discountNoteEl = document.getElementById("discount-note");
-
-      finalPriceEl.textContent = formatPrice(discountedPrice);
-      if (discountPercent > 0) {
-        originalPriceEl.textContent = formatPrice(data.price);
-        discountNoteEl.textContent = `${discountPercent}% OFF para voce com ${userPoints} pontos. Economia de ${formatPrice(savedValue)}.`;
-      } else {
-        originalPriceEl.textContent = "";
-        discountNoteEl.textContent = `Sem desconto no momento. Voce tem ${userPoints} pontos.`;
-      }
-      document.getElementById("product-id").textContent = data.id;
-      document.getElementById("description").textContent = data.description;
-      document.getElementById("stock").textContent = `${data.stock} unidade(s)`;
-
-      const stockBadge = document.getElementById("stock-badge");
-      if (data.stock > 0) {
-        stockBadge.textContent = "Em estoque";
-        stockBadge.className = "badge in-stock";
-      } else {
-        stockBadge.textContent = "Sem estoque";
-        stockBadge.className = "badge out-stock";
-      }
-    }
-
-    async function loadProduct() {
-      const productId = resolveProductId();
-      const errorEl = document.getElementById("error");
-      if (!productId) {
-        errorEl.style.display = "block";
-        errorEl.textContent =
-          "Nenhum produto foi informado para abrir os detalhes.";
-        return;
-      }
-
-      currentProductId = productId;
-
-      // Fast path for MCP apps: page already receives product payload via template.
-      if (INITIAL_PRODUCT && INITIAL_PRODUCT.id === productId) {
-        renderProduct(INITIAL_PRODUCT, INITIAL_USER || { points: 0 });
-      }
-
-      try {
-        const [productResult, userResult] = await Promise.all([
-          fetchJsonWithTimeout(
-            `${SERVER_ORIGIN}/products/${encodeURIComponent(productId)}`,
-          ),
-          fetchJsonWithTimeout(`${SERVER_ORIGIN}/users/${USER_ID}`),
-        ]);
-        const data = productResult.json;
-        const userData = userResult.ok ? userResult.json : { points: 0 };
-
-        if (!productResult.ok || data.error) {
-          throw new Error(data.error || "Falha ao carregar produto");
-        }
-
-        renderProduct(data, userData);
-      } catch (err) {
-        // If we already rendered from injected data, do not block the UI.
-        if (INITIAL_PRODUCT && INITIAL_PRODUCT.id === productId) {
-          return;
-        }
-        errorEl.style.display = "block";
-        errorEl.textContent = `Nao foi possivel abrir os detalhes: ${err.message}`;
-      }
-    }
-
-    function goBack() {
-      window.location.href = `${SERVER_ORIGIN}/store`;
-    }
-
-    function goToStorePurchase() {
-      if (!currentProductId) {
-        window.open(`${SERVER_ORIGIN}/store`, "_blank", "noopener,noreferrer");
-        return;
-      }
-      window.open(`${SERVER_ORIGIN}/store?productId=${encodeURIComponent(currentProductId)}`, "_blank", "noopener,noreferrer");
-    }
-
-    loadProduct();
+    window.__SERVER_ORIGIN = "{{SERVER_ORIGIN}}";
+    window.__PRESELECTED_PRODUCT_ID = "{{PRODUCT_ID}}";
+    window.__INITIAL_PRODUCT = {{ PRODUCT_DATA }};
+    window.__INITIAL_USER = {{ USER_DATA }};
   </script>
+  <script type="module" src="{{SERVER_ORIGIN}}/assets/product-detail-widget.js"></script>
 </body>
 
 </html>

@@ -104,16 +104,31 @@ function serializeForInlineScript(data) {
   return JSON.stringify(data ?? null).replace(/</g, "\\u003c");
 }
 
+function replaceTemplatePlaceholder(template, key, value) {
+  return template.replace(
+    new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, "g"),
+    value,
+  );
+}
+
 function buildProductDetailPage(
   productId = "",
   productData = null,
   userData = null,
 ) {
-  return rawProductDetailHtml
-    .replace(/\{\{SERVER_ORIGIN\}\}/g, serverOrigin)
-    .replace(/\{\{PRODUCT_ID\}\}/g, productId)
-    .replace(/\{\{PRODUCT_DATA\}\}/g, serializeForInlineScript(productData))
-    .replace(/\{\{USER_DATA\}\}/g, serializeForInlineScript(userData));
+  return replaceTemplatePlaceholder(rawProductDetailHtml, "SERVER_ORIGIN", serverOrigin)
+    .replace(
+      new RegExp("\\{\\{\\s*PRODUCT_ID\\s*\\}\\}", "g"),
+      productId,
+    )
+    .replace(
+      new RegExp("\\{\\{\\s*PRODUCT_DATA\\s*\\}\\}", "g"),
+      serializeForInlineScript(productData),
+    )
+    .replace(
+      new RegExp("\\{\\{\\s*USER_DATA\\s*\\}\\}", "g"),
+      serializeForInlineScript(userData),
+    );
 }
 
 function buildStorePage() {

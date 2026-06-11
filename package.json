@@ -4,7 +4,10 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build:store-widget": "bun build ./src/store-widget.tsx --outfile ./public/assets/store-widget.js"
+    "build:store-widget": "bun build ./src/store-widget.tsx --outfile ./public/assets/store-widget.js",
+    "build:product-detail-widget": "bun build ./src/product-detail-widget.tsx --outfile ./public/assets/product-detail-widget.js",
+    "build:todo-widget": "bun build ./src/todo-widget.tsx --outfile ./public/assets/todo-widget.js",
+    "build:all": "bun build ./src/store-widget.tsx --outfile ./public/assets/store-widget.js && bun build ./src/product-detail-widget.tsx --outfile ./public/assets/product-detail-widget.js && bun build ./src/todo-widget.tsx --outfile ./public/assets/todo-widget.js"
   },
   "devDependencies": {
     "@types/bun": "latest"
