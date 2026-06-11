@@ -79,7 +79,8 @@ function App() {
     setFeedbackKind("ok");
     setFeedback("Redirecionando para finalizar a compra no app...");
     setModalOpen(false);
-    window.location.href = link;
+
+    window.open(link, "_blank", "noopener,noreferrer");
   }
 
   async function askProduct(event: React.FormEvent) {
