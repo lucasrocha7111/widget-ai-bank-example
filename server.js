@@ -1,5 +1,6 @@
 import { createServer } from "node:http";
 import { readFileSync, writeFileSync } from "node:fs";
+import { createRemoteJWKSet, jwtVerify } from "jose";
 import {
   registerAppResource,
   registerAppTool,
@@ -11,6 +12,24 @@ import { z } from "zod";
 
 const port = Number(process.env.PORT ?? 8787);
 const serverOrigin = process.env.SERVER_ORIGIN ?? `http://localhost:${port}`;
+const oauthEnabled = String(process.env.OAUTH_ENABLED ?? "false") === "true";
+const oauthIssuer = process.env.OAUTH_ISSUER ?? "";
+const oauthAudience = process.env.OAUTH_AUDIENCE ?? "";
+const oauthJwksUri =
+  process.env.OAUTH_JWKS_URI ??
+  (oauthIssuer
+    ? `${oauthIssuer.replace(/\/$/, "")}/.well-known/jwks.json`
+    : "");
+
+if (oauthEnabled && (!oauthIssuer || !oauthAudience || !oauthJwksUri)) {
+  throw new Error(
+    "OAuth is enabled but OAUTH_ISSUER, OAUTH_AUDIENCE or OAUTH_JWKS_URI is missing.",
+  );
+}
+
+const oauthJwks = oauthEnabled
+  ? createRemoteJWKSet(new URL(oauthJwksUri))
+  : null;
 const todoHtml = readFileSync("public/todo-widget.html", "utf8");
 const rawStoreHtml = readFileSync("public/store.html", "utf8");
 const rawProductDetailHtml = readFileSync("public/product-detail.html", "utf8");
@@ -99,6 +118,54 @@ function toToolSafeName(value) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "");
+}
+
+function isProtectedPath(pathname) {
+  return (
+    pathname === MCP_PATH ||
+    pathname === "/products" ||
+    pathname === "/products/search" ||
+    pathname.startsWith("/products/") ||
+    pathname.startsWith("/users/") ||
+    pathname === "/purchase"
+  );
+}
+
+function readBearerToken(authorizationHeader = "") {
+  const match = authorizationHeader.match(/^Bearer\s+(.+)$/i);
+  return match?.[1]?.trim() || "";
+}
+
+async function requireOAuth(req, res) {
+  if (!oauthEnabled) return true;
+
+  const token = readBearerToken(String(req.headers.authorization || ""));
+  if (!token || !oauthJwks) {
+    res
+      .writeHead(401, {
+        "content-type": "application/json",
+        "www-authenticate": 'Bearer realm="itau-ia-api"',
+      })
+      .end(JSON.stringify({ error: "missing bearer token" }));
+    return false;
+  }
+
+  try {
+    await jwtVerify(token, oauthJwks, {
+      issuer: oauthIssuer,
+      audience: oauthAudience,
+    });
+    return true;
+  } catch (error) {
+    res
+      .writeHead(401, {
+        "content-type": "application/json",
+        "www-authenticate":
+          'Bearer error="invalid_token", error_description="token validation failed"',
+      })
+      .end(JSON.stringify({ error: "invalid token" }));
+    return false;
+  }
 }
 
 const addTodoInputSchema = {
@@ -546,7 +613,8 @@ const httpServer = createServer(async (req, res) => {
     res.writeHead(204, {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-      "Access-Control-Allow-Headers": "content-type, mcp-session-id",
+      "Access-Control-Allow-Headers":
+        "authorization, content-type, mcp-session-id",
       "Access-Control-Expose-Headers": "Mcp-Session-Id",
     });
     res.end();
@@ -564,10 +632,15 @@ const httpServer = createServer(async (req, res) => {
     res.writeHead(204, {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-      "Access-Control-Allow-Headers": "content-type",
+      "Access-Control-Allow-Headers": "authorization, content-type",
     });
     res.end();
     return;
+  }
+
+  if (isProtectedPath(url.pathname) && req.method !== "OPTIONS") {
+    const authorized = await requireOAuth(req, res);
+    if (!authorized) return;
   }
 
   if (req.method === "GET" && url.pathname === "/products/search") {
