@@ -1,1026 +1,260 @@
 <!doctype html>
-<html>
-
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Loja Itau</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family:
-        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-        "Helvetica Neue", Arial, sans-serif;
-      background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
-      padding: 24px;
-      min-height: 100vh;
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .header {
-      background: linear-gradient(135deg, #ff8c00 0%, #ff7300 100%);
-      color: white;
-      padding: 32px 24px;
-      border-radius: 16px;
-      margin-bottom: 32px;
-      box-shadow: 0 8px 24px rgba(255, 140, 0, 0.2);
-    }
-
-    .header h1 {
-      font-size: 32px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .user-info {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: rgba(255, 255, 255, 0.15);
-      padding: 16px 20px;
-      border-radius: 12px;
-      backdrop-filter: blur(10px);
-      margin-top: 16px;
-    }
-
-    .user-name {
-      font-size: 18px;
-      font-weight: 600;
-    }
-
-    .points-badge {
-      background: rgba(255, 255, 255, 0.25);
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-weight: 700;
-      font-size: 16px;
-    }
-
-    .store-section {
-      background: white;
-      border-radius: 16px;
-      padding: 32px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-    }
-
-    .store-title {
-      font-size: 24px;
-      font-weight: 700;
-      color: #333;
-      margin-bottom: 24px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .store-title::before {
-      content: "";
-      width: 4px;
-      height: 28px;
-      background: #ff8c00;
-      border-radius: 2px;
-    }
-
-    .carousel-wrapper {
-      position: relative;
-      overflow: hidden;
-      border-radius: 12px;
-    }
-
-    .carousel {
-      display: flex;
-      gap: 20px;
-      overflow-x: auto;
-      scroll-behavior: smooth;
-      padding: 8px;
-      scroll-padding: 0;
-    }
-
-    .carousel::-webkit-scrollbar {
-      height: 8px;
-    }
-
-    .carousel::-webkit-scrollbar-track {
-      background: #f0f0f0;
-      border-radius: 10px;
-    }
-
-    .carousel::-webkit-scrollbar-thumb {
-      background: #ff8c00;
-      border-radius: 10px;
-    }
-
-    .carousel::-webkit-scrollbar-thumb:hover {
-      background: #ff7300;
-    }
-
-    .product-card {
-      flex: 0 0 320px;
-      background: white;
-      border-radius: 12px;
-      border: 1px solid #f0f0f0;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-      transition: all 0.3s ease;
-      cursor: pointer;
-    }
-
-    .product-card.selected {
-      border-color: #ff8c00;
-      box-shadow:
-        0 0 0 3px rgba(255, 140, 0, 0.2),
-        0 12px 24px rgba(255, 140, 0, 0.18);
-      transform: translateY(-4px);
-    }
-
-    .product-card:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 12px 24px rgba(255, 140, 0, 0.15);
-      border-color: #ff8c00;
-    }
-
-    .product-image-container {
-      position: relative;
-      width: 100%;
-      height: 240px;
-      background: linear-gradient(135deg, #f9f9f9 0%, #f0f0f0 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-    }
-
-    .product-image {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      padding: 16px;
-    }
-
-    .product-info {
-      padding: 20px;
-    }
-
-    .product-name {
-      font-size: 18px;
-      font-weight: 700;
-      color: #333;
-      margin-bottom: 8px;
-    }
-
-    .product-description {
-      font-size: 13px;
-      color: #666;
-      margin-bottom: 16px;
-      line-height: 1.4;
-    }
-
-    .price-section {
-      background: linear-gradient(135deg, #fff9f5 0%, #ffe8d6 100%);
-      padding: 16px;
-      border-radius: 10px;
-      margin-bottom: 16px;
-    }
-
-    .price-label {
-      font-size: 12px;
-      color: #999;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      font-weight: 600;
-      margin-bottom: 6px;
-    }
-
-    .price-display {
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-
-    .original-price {
-      font-size: 14px;
-      color: #999;
-      text-decoration: line-through;
-    }
-
-    .price {
-      font-size: 28px;
-      font-weight: 700;
-      color: #333;
-    }
-
-    .discount-info {
-      background: rgba(255, 140, 0, 0.1);
-      padding: 10px;
-      border-radius: 6px;
-      border-left: 3px solid #ff8c00;
-    }
-
-    .discount-text {
-      font-size: 13px;
-      color: #ff7300;
-      font-weight: 600;
-    }
-
-    .button-group {
-      display: flex;
-      gap: 12px;
-    }
-
-    .btn {
-      flex: 1;
-      padding: 12px 16px;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #ff8c00 0%, #ff7300 100%);
-      color: white;
-      box-shadow: 0 4px 12px rgba(255, 140, 0, 0.3);
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(255, 140, 0, 0.4);
-    }
-
-    .btn-primary:active {
-      transform: translateY(0);
-    }
-
-    .purchase-feedback {
-      margin-top: 16px;
-      padding: 12px;
-      border-radius: 8px;
-      text-align: center;
-      font-size: 13px;
-      font-weight: 600;
-    }
-
-    .purchase-success {
-      background: #e8f5e9;
-      color: #2e7d32;
-      border: 1px solid #c8e6c9;
-    }
-
-    .purchase-error {
-      background: #ffebee;
-      color: #c62828;
-      border: 1px solid #ffcdd2;
-    }
-
-    .nav-indicator {
-      text-align: center;
-      margin-top: 16px;
-      font-size: 13px;
-      color: #999;
-    }
-
-    .question-box {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-
-    .question-input {
-      width: 100%;
-      border: 1px solid #e2e2e2;
-      border-radius: 10px;
-      padding: 12px 14px;
-      font-size: 14px;
-      outline: none;
-    }
-
-    .question-input:focus {
-      border-color: #ff8c00;
-      box-shadow: 0 0 0 3px rgba(255, 140, 0, 0.15);
-    }
-
-    .question-result {
-      margin-bottom: 16px;
-      padding: 12px;
-      border-radius: 10px;
-      font-size: 14px;
-      color: #333;
-      border: 1px solid #ffe2c2;
-      background: #fff8f1;
-      display: none;
-    }
-
-    .selected-product {
-      margin-bottom: 20px;
-      border: 1px solid #ffe2c2;
-      background: linear-gradient(135deg, #fffaf5 0%, #fff2e7 100%);
-      border-radius: 12px;
-      padding: 16px;
-      display: none;
-    }
-
-    .selected-product h3 {
-      color: #a04a00;
-      margin-bottom: 8px;
-      font-size: 18px;
-    }
-
-    .selected-product p {
-      color: #4e4e4e;
-      margin-bottom: 8px;
-      line-height: 1.4;
-    }
-
-    .error-message {
-      background: #ffebee;
-      color: #c62828;
-      padding: 20px;
-      border-radius: 8px;
-      text-align: center;
-      font-weight: 500;
-    }
-
-    .detail-screen {
-      margin-bottom: 18px;
-      border: 1px solid #ffd9b7;
-      border-radius: 14px;
-      background: linear-gradient(145deg, #fff8ef 0%, #fff0df 100%);
-      padding: 16px;
-      display: none;
-    }
-
-    .detail-screen h3 {
-      color: #8a3e00;
-      font-size: 20px;
-      margin-bottom: 12px;
-    }
-
-    .detail-grid {
-      display: grid;
-      grid-template-columns: 220px 1fr;
-      gap: 14px;
-    }
-
-    .detail-image {
-      width: 100%;
-      height: 220px;
-      object-fit: contain;
-      border-radius: 10px;
-      background: #fff;
-      border: 1px solid #f3e6d9;
-      padding: 10px;
-    }
-
-    .detail-price-old {
-      font-size: 14px;
-      text-decoration: line-through;
-      color: #9d8b78;
-    }
-
-    .detail-price-new {
-      font-size: 30px;
-      font-weight: 800;
-      color: #2f2f2f;
-      margin: 4px 0 8px;
-    }
-
-    .detail-note {
-      font-size: 12px;
-      color: #8a4a00;
-      background: #fff5e9;
-      border: 1px solid #ffd7ae;
-      border-radius: 999px;
-      padding: 5px 10px;
-      display: inline-block;
-    }
-
-    .detail-meta {
-      margin-top: 10px;
-      font-size: 14px;
-      color: #4e4e4e;
-      line-height: 1.5;
-    }
-
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.55);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
-
-    .modal-overlay.active {
-      display: flex;
-    }
-
-    .modal-content {
-      width: min(480px, 100%);
-      background: white;
-      border-radius: 20px;
-      padding: 28px 24px;
-      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.2);
-      animation: popIn 0.25s ease;
-      text-align: center;
-    }
-
-    @keyframes popIn {
-      from {
-        opacity: 0;
-        transform: translateY(18px) scale(0.98);
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Loja Itau React</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --orange-1: #ff9e2f;
+        --orange-2: #e36700;
+        --slate-1: #101a2f;
+        --slate-2: #28446e;
+        --ink: #102139;
+        --muted: #6f7f96;
+        --surface: #ffffff;
       }
 
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-    }
-
-    .modal-icon {
-      font-size: 42px;
-      margin-bottom: 14px;
-    }
-
-    .modal-title {
-      font-size: 22px;
-      font-weight: 700;
-      color: #333;
-      margin-bottom: 10px;
-    }
-
-    .modal-description {
-      color: #555;
-      font-size: 15px;
-      line-height: 1.6;
-      margin-bottom: 24px;
-    }
-
-    .modal-buttons {
-      display: flex;
-      gap: 12px;
-    }
-
-    .modal-btn {
-      flex: 1;
-      padding: 12px 16px;
-      border: none;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.18s ease;
-    }
-
-    .modal-btn-confirm {
-      background: linear-gradient(135deg, #ff8c00 0%, #ff7300 100%);
-      color: white;
-    }
-
-    .modal-btn-confirm:hover {
-      transform: translateY(-1px);
-    }
-
-    .modal-btn-cancel {
-      background: #f5f5f5;
-      color: #333;
-    }
-
-    .modal-btn-cancel:hover {
-      transform: translateY(-1px);
-    }
-
-
-    @media (max-width: 768px) {
-      .header {
-        padding: 24px 16px;
+      * {
+        box-sizing: border-box;
       }
 
-      .header h1 {
-        font-size: 24px;
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+        background:
+          radial-gradient(circle at 8% 0%, #ffe8c7 0%, transparent 42%),
+          linear-gradient(135deg, #f8f7f5 0%, #edf4ff 100%);
+        color: var(--ink);
       }
 
-      .store-section {
+      #root {
+        min-height: 100vh;
+      }
+
+      .shell {
+        max-width: 1020px;
+        margin: 0 auto;
         padding: 20px;
       }
 
-      .product-card {
-        flex: 0 0 280px;
+      .hero {
+        color: #fff;
+        border-radius: 18px;
+        padding: 28px;
+        background:
+          linear-gradient(
+            120deg,
+            var(--slate-1) 0%,
+            var(--slate-2) 55%,
+            #365f97 100%
+          ),
+          repeating-linear-gradient(
+            -35deg,
+            rgba(255, 255, 255, 0.06) 0,
+            rgba(255, 255, 255, 0.06) 8px,
+            rgba(255, 255, 255, 0) 8px,
+            rgba(255, 255, 255, 0) 16px
+          );
+        box-shadow: 0 18px 40px rgba(24, 34, 58, 0.28);
+      }
+
+      .kicker {
+        margin: 0;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-size: 12px;
+        opacity: 0.84;
+      }
+
+      .hero h1 {
+        margin: 8px 0;
+        font-size: 28px;
+      }
+
+      .hero p {
+        margin: 0;
+        max-width: 640px;
+        opacity: 0.92;
+      }
+
+      .card {
+        margin-top: 16px;
+        border-radius: 18px;
+        padding: 20px;
+        background: var(--surface);
+        box-shadow: 0 10px 28px rgba(16, 33, 57, 0.12);
+      }
+
+      .search {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+      }
+
+      .search input {
+        width: 100%;
+        border-radius: 12px;
+        border: 1px solid #d9e1ed;
+        padding: 12px 14px;
+        font-size: 14px;
+      }
+
+      .search button,
+      .actions button,
+      .actions a {
+        border-radius: 12px;
+        border: none;
+        padding: 11px 16px;
+        cursor: pointer;
+        text-decoration: none;
+        color: #fff;
+        background: linear-gradient(135deg, var(--orange-1), var(--orange-2));
+        font-weight: 600;
+        font-size: 13px;
+      }
+
+      .search button:disabled,
+      .actions button:disabled {
+        opacity: 0.6;
+        cursor: default;
+      }
+
+      .answer {
+        margin: 12px 0 0;
+        border-radius: 12px;
+        padding: 10px 12px;
+        border: 1px solid #f4d2b0;
+        background: #fff8f0;
+      }
+
+      .product {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        gap: 14px;
+        border: 1px solid #e3e9f3;
+        border-radius: 14px;
+        padding: 14px;
+        background: #fcfeff;
+      }
+
+      .product img {
+        width: 100%;
+        height: 220px;
+        object-fit: contain;
+      }
+
+      .product h2 {
+        margin: 0;
+      }
+
+      .product p {
+        margin: 8px 0;
       }
 
       .price {
-        font-size: 24px;
+        font-size: 26px;
+        font-weight: 700;
       }
 
-      .question-box {
-        grid-template-columns: 1fr;
-      }
-
-      .modal-content {
-        padding: 24px;
-        max-width: 90%;
-      }
-
-      .modal-title {
-        font-size: 20px;
-      }
-
-      .modal-description {
+      .stock {
+        color: var(--muted);
         font-size: 14px;
       }
-    }
-  </style>
-</head>
 
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>🛍️ Loja Itau</h1>
-      <div class="user-info">
-        <div class="user-name" id="user-name">Carregando...</div>
-        <div class="points-badge" id="points-badge">0 pontos</div>
-      </div>
-    </div>
-
-    <div class="store-section">
-      <div class="store-title">Produtos em destaque</div>
-
-      <div id="detail-screen" class="detail-screen"></div>
-
-      <div class="question-box">
-        <input id="question-input" class="question-input" placeholder="Ex.: Quero um iPhone na loja do Itau, tem?" />
-        <button class="btn btn-primary" onclick="askProductQuestion()">
-          Perguntar
-        </button>
-      </div>
-      <div id="question-result" class="question-result"></div>
-      <div id="selected-product" class="selected-product"></div>
-
-      <div class="carousel-wrapper">
-        <div class="carousel" id="carousel">
-          <!-- Cards de produto serão injetados aqui -->
-        </div>
-      </div>
-      <div class="nav-indicator">💡 Deslize para explorar mais produtos</div>
-    </div>
-  </div>
-
-  <div id="purchase-modal" class="modal-overlay" onclick="if (event.target === this) closePurchaseModal();">
-    <div class="modal-content">
-      <div class="modal-icon">📱</div>
-      <div class="modal-title">Confirmar compra</div>
-      <div class="modal-description" id="modal-description">
-        Você será redirecionado para o app Itau para completar sua compra.
-      </div>
-      <div class="modal-buttons">
-        <button class="modal-btn modal-btn-cancel" type="button" onclick="closePurchaseModal()">
-          Cancelar
-        </button>
-        <button class="modal-btn modal-btn-confirm" type="button" onclick="confirmPurchase()">
-          Continuar
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    const SERVER_ORIGIN = "{{SERVER_ORIGIN}}";
-    const USER_ID = "user-1";
-    let products = [];
-    let user = null;
-    let selectedProductId = null;
-    let bridgeReady = null;
-    let pendingPurchase = null;
-
-    console.log("[Store] SERVER_ORIGIN:", SERVER_ORIGIN);
-    console.log("[Store] Protocol:", window.location.protocol);
-
-    function formatPrice(value) {
-      return `$${value.toFixed(2)}`;
-    }
-
-    function computeDiscount(points) {
-      const blocks = Math.floor(points / 100);
-      const percent = Math.min(20, blocks * 5);
-      return percent;
-    }
-
-    function renderDetailScreen(product) {
-      if (!product) return;
-
-      const detailEl = document.getElementById("detail-screen");
-      const discountPercent = computeDiscount(user?.points || 0);
-      const discountedPrice = product.price * (1 - discountPercent / 100);
-      const savedValue = product.price - discountedPrice;
-
-      detailEl.style.display = "block";
-      detailEl.innerHTML = `
-          <h3>Tela especifica do produto</h3>
-          <div class="detail-grid">
-            <img class="detail-image" src="${product.imageUrl}" alt="${escapeHtml(product.name)}" />
-            <div>
-              <div style="font-size:22px;font-weight:700;color:#333;">${escapeHtml(product.name)}</div>
-              <div style="margin-top:6px;color:#666;">${escapeHtml(product.description)}</div>
-              <div style="margin-top:12px;">
-                ${discountPercent > 0 ? `<div class="detail-price-old">${formatPrice(product.price)}</div>` : ""}
-                <div class="detail-price-new">${formatPrice(discountedPrice)}</div>
-                <div class="detail-note">${discountPercent > 0 ? `${discountPercent}% OFF com ${user?.points || 0} pontos. Economia ${formatPrice(savedValue)}.` : `Sem desconto no momento. Pontos atuais: ${user?.points || 0}.`}</div>
-              </div>
-              <div class="detail-meta">
-                <div><strong>ID:</strong> ${escapeHtml(product.id)}</div>
-                <div><strong>Estoque:</strong> ${product.stock > 0 ? `${product.stock} unidade(s)` : "Sem estoque"}</div>
-                <div style="margin-top:10px;"><button class="btn btn-primary" onclick="purchase('${product.id}', ${product.price}, ${discountPercent})">Comprar agora</button></div>
-              </div>
-            </div>
-          </div>
-        `;
-
-      detailEl.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-
-    function escapeHtml(text) {
-      return String(text || "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#39;");
-    }
-
-    async function load() {
-      try {
-        console.log("[Store] Carregando produtos e usuário...");
-        const [pRes, uRes] = await Promise.all([
-          fetch(`${SERVER_ORIGIN}/products`),
-          fetch(`${SERVER_ORIGIN}/users/${USER_ID}`),
-        ]);
-
-        console.log("[Store] Resposta de produtos:", pRes.status, pRes.ok);
-        console.log("[Store] Resposta de usuário:", uRes.status, uRes.ok);
-
-        if (!pRes.ok || !uRes.ok) {
-          const pErr = !pRes.ok ? await pRes.text() : "";
-          const uErr = !uRes.ok ? await uRes.text() : "";
-          throw new Error(`Falha ao carregar dados. Produtos: ${pErr} | Usuário: ${uErr}`);
-        }
-
-        products = await pRes.json();
-        user = await uRes.json();
-
-        console.log("[Store] Produtos carregados:", products.length);
-        console.log("[Store] Usuário:", user.name);
-
-        document.getElementById("user-name").textContent = user.name;
-        document.getElementById("points-badge").textContent =
-          `${user.points} pontos`;
-
-        renderCarousel();
-
-        const productFromQuery = new URLSearchParams(
-          window.location.search,
-        ).get("productId");
-        if (
-          productFromQuery &&
-          products.some((product) => product.id === productFromQuery)
-        ) {
-          selectProduct(productFromQuery);
-        }
-      } catch (err) {
-        console.error("[Store] Erro ao carregar loja:", err);
-        document.querySelector(".store-section").innerHTML =
-          `<div class="error-message">❌ Erro ao carregar loja. Tente novamente.<br><small>${escapeHtml(err.message)}</small></div>`;
-      }
-    }
-
-    function setupMcpBridge() {
-      if (window.location.protocol !== "ui:") {
-        bridgeReady = Promise.resolve();
-        return;
+      .actions {
+        margin-top: 10px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
       }
 
-      let rpcId = 0;
-      const pendingRequests = new Map();
-
-      const rpcNotify = (method, params) => {
-        window.parent.postMessage({ jsonrpc: "2.0", method, params }, "*");
-      };
-
-      const rpcRequest = (method, params) =>
-        new Promise((resolve, reject) => {
-          const id = ++rpcId;
-          pendingRequests.set(id, { resolve, reject });
-          window.parent.postMessage(
-            { jsonrpc: "2.0", id, method, params },
-            "*",
-          );
-        });
-
-      window.addEventListener(
-        "message",
-        (event) => {
-          if (event.source !== window.parent) return;
-          const message = event.data;
-          if (!message || message.jsonrpc !== "2.0") return;
-
-          if (typeof message.id === "number") {
-            const pending = pendingRequests.get(message.id);
-            if (!pending) return;
-            pendingRequests.delete(message.id);
-            if (message.error) {
-              pending.reject(message.error);
-              return;
-            }
-            pending.resolve(message.result);
-            return;
-          }
-
-          if (message.method !== "ui/notifications/tool-result") return;
-
-          const payload = message.params?.result || message.params;
-          const structured = payload?.structuredContent;
-          const toolName = message.params?.name || payload?.name || "";
-          const isOpenDetailTool =
-            typeof toolName === "string" &&
-            (toolName === "open_product_detail" ||
-              toolName.startsWith("open_prod_"));
-
-          if (isOpenDetailTool && structured?.product) {
-            renderDetailScreen(structured.product);
-            return;
-          }
-
-          // Defensive fallback when host omits toolName but sends product payload.
-          if (structured?.product?.id && structured?.detailUrl) {
-            renderDetailScreen(structured.product);
-          }
-        },
-        { passive: true },
-      );
-
-      bridgeReady = rpcRequest("ui/initialize", {
-        appInfo: { name: "store-widget", version: "0.1.0" },
-        appCapabilities: {},
-        protocolVersion: "2026-01-26",
-      })
-        .then(() => rpcNotify("ui/notifications/initialized", {}))
-        .catch((error) => {
-          console.error("Falha ao inicializar bridge MCP:", error);
-        });
-    }
-
-    function renderCarousel() {
-      const carousel = document.getElementById("carousel");
-      carousel.innerHTML = "";
-
-      products.forEach((product, idx) => {
-        const discountPercent = computeDiscount(user.points);
-        const discountedPrice = product.price * (1 - discountPercent / 100);
-        const discount = product.price - discountedPrice;
-
-        const card = document.createElement("div");
-        card.className = "product-card";
-        card.dataset.productId = product.id;
-        if (selectedProductId === product.id) {
-          card.classList.add("selected");
-        }
-        card.innerHTML = `
-                    <div class="product-image-container">
-                        <img class="product-image" src="${product.imageUrl}" alt="${product.name}" />
-                    </div>
-                    <div class="product-info">
-                        <div class="product-name">${product.name}</div>
-                        <div class="product-description">${product.description}</div>
-
-                        <div class="price-section">
-                            <div class="price-label">Preço Normal</div>
-                            <div class="price-display">
-                                <div class="price">${formatPrice(product.price)}</div>
-                            </div>
-
-                            ${discountPercent > 0
-            ? `
-                                <div class="discount-info">
-                                    <div class="discount-text">
-                                        🎁 Com pontos: ${formatPrice(discountedPrice)} (${discountPercent}% OFF)
-                                    </div>
-                                    <div class="discount-text" style="margin-top: 4px; font-size: 12px;">
-                                        Economize: ${formatPrice(discount)}
-                                    </div>
-                                </div>
-                            `
-            : `
-                                <div class="discount-info">
-                                    <div class="discount-text">
-                                        📌 Acumule 100 pontos para ganhar desconto!
-                                    </div>
-                                </div>
-                            `
-          }
-                        </div>
-
-                        <div class="button-group">
-                          <button class="btn" style="background:#fff3e7;color:#a04a00;border:1px solid #ffd7b3;" onclick="event.stopPropagation(); openProductDetail('${product.id}')">
-                            Ver detalhes
-                          </button>
-                            <button class="btn btn-primary" onclick="event.stopPropagation(); purchase('${product.id}', ${product.price}, ${discountPercent})">
-                                Comprar
-                            </button>
-                        </div>
-                        <div id="feedback-${idx}" class="purchase-feedback" style="display:none;"></div>
-                    </div>
-                `;
-
-        card.addEventListener("click", () => {
-          openProductDetail(product.id);
-        });
-
-        carousel.appendChild(card);
-      });
-    }
-
-    function selectProduct(productId) {
-      selectedProductId = productId;
-      const product = products.find((p) => p.id === productId);
-      if (!product) return;
-
-      const selectedEl = document.getElementById("selected-product");
-      selectedEl.style.display = "block";
-      selectedEl.innerHTML = `
-          <h3>Tela de detalhes do item selecionado</h3>
-                <p><strong>Produto:</strong> ${escapeHtml(product.name)}</p>
-                <p><strong>Descricao:</strong> ${escapeHtml(product.description)}</p>
-                <p><strong>Preco:</strong> ${formatPrice(product.price)}</p>
-                <p><strong>Estoque:</strong> ${product.stock > 0 ? `${product.stock} unidade(s)` : "Sem estoque"}</p>
-          <p><strong>Abrir pagina dedicada:</strong> <a href="${SERVER_ORIGIN}/store/product/${encodeURIComponent(product.id)}" target="_blank" rel="noopener noreferrer">${SERVER_ORIGIN}/store/product/${encodeURIComponent(product.id)}</a></p>
-            `;
-
-      document.querySelectorAll(".product-card").forEach((cardEl) => {
-        if (cardEl.dataset.productId === productId) {
-          cardEl.classList.add("selected");
-        } else {
-          cardEl.classList.remove("selected");
-        }
-      });
-    }
-
-    function openProductDetail(productId) {
-      const detailUrl = `${SERVER_ORIGIN}/store/product/${encodeURIComponent(productId)}`;
-
-      // In MCP embedded apps (ui://), cross-origin navigation may be blocked.
-      // Fallback to rendering details inside the same page so click always works.
-      if (window.location.protocol === "ui:") {
-        selectProduct(productId);
-        const selectedEl = document.getElementById("selected-product");
-        selectedEl.scrollIntoView({ behavior: "smooth", block: "start" });
-        return;
+      .actions .secondary {
+        background: linear-gradient(135deg, #2866b7, #1d4f91);
       }
 
-      window.location.href = detailUrl;
-    }
-
-    async function askProductQuestion() {
-      const input = document.getElementById("question-input");
-      const question = input.value.trim();
-      const resultEl = document.getElementById("question-result");
-
-      if (!question) {
-        resultEl.style.display = "block";
-        resultEl.textContent = "Digite uma pergunta para consultar um item.";
-        return;
+      .feedback {
+        margin-top: 12px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        font-size: 14px;
       }
 
-      try {
-        const url = `${SERVER_ORIGIN}/products/search?q=${encodeURIComponent(question)}`;
-        console.log("[Store] Buscando:", url);
-        const resp = await fetch(url);
-        console.log("[Store] Resposta de busca:", resp.status, resp.ok);
-
-        const result = await resp.json();
-
-        if (!resp.ok || result.error) {
-          resultEl.style.display = "block";
-          resultEl.textContent = `Nao foi possivel consultar agora: ${result.error || "erro desconhecido"}`;
-          console.error("[Store] Erro de busca:", result.error);
-          return;
-        }
-
-        resultEl.style.display = "block";
-        resultEl.textContent = result.answer;
-
-        if (result.found && result.product?.id) {
-          openProductDetail(result.product.id);
-        }
-      } catch (err) {
-        console.error("[Store] Erro de rede ao consultar:", err);
-        resultEl.style.display = "block";
-        resultEl.textContent = "Erro de rede ao consultar produto.";
-      }
-    }
-
-    function purchase(productId, price, discountPercent) {
-      const product = products.find((p) => p.id === productId);
-      if (!product) {
-        console.error("[Store] Produto não encontrado para compra:", productId);
-        return;
+      .feedback.ok {
+        background: #ecf9ef;
+        color: #116028;
+        border: 1px solid #bde8c7;
       }
 
-      pendingPurchase = {
-        productId,
-        price,
-        discountPercent,
-        productName: product.name,
-      };
-
-      const description = document.getElementById("modal-description");
-      description.textContent = `Você será redirecionado para ${product.name} no app Itau para completar a compra.`;
-
-      document.getElementById("purchase-modal").classList.add("active");
-    }
-
-    function closePurchaseModal() {
-      document.getElementById("purchase-modal").classList.remove("active");
-      pendingPurchase = null;
-    }
-
-    function confirmPurchase() {
-      if (!pendingPurchase) return;
-
-      // Prefer deeplink by productId (more stable). Open in same context so OS can handle app intent.
-      const deeplink = `bankpoc://product/${encodeURIComponent(pendingPurchase.productId)}`;
-
-      // Try opening the deeplink in a new tab (user-triggered, should avoid popup blockers).
-      try {
-        const opened = window.open(deeplink, '_blank', 'noopener,noreferrer');
-        if (!opened) {
-          // If window.open was blocked, fallback to programmatic anchor click in same context.
-          const a = document.createElement('a');
-          a.href = deeplink;
-          a.rel = 'noopener noreferrer';
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-        }
-      } catch (err) {
-        // Last-resort fallback: try assigning location (may be blocked in some webviews).
-        try {
-          window.location.href = deeplink;
-        } catch (e) {
-          console.error('[Store] Falha ao abrir deeplink:', e);
-        }
+      .feedback.err {
+        background: #fff2f2;
+        color: #9f2424;
+        border: 1px solid #f7cccc;
       }
 
-      // If the app doesn't open, open the web fallback after 1200ms.
-      const fallbackTimer = setTimeout(() => {
-        const webFallback = `https://poc-itau.com.br/product/${encodeURIComponent(pendingPurchase.productName)}`;
-        window.open(webFallback, '_blank', 'noopener,noreferrer');
-      }, 1200);
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(14, 22, 38, 0.62);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+        padding: 16px;
+      }
 
-      // Close modal and clear pending (keep timer running briefly to allow deeplink).
-      closePurchaseModal();
-    }
+      .modal-card {
+        width: min(440px, 100%);
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid #e5ebf5;
+        box-shadow: 0 24px 40px rgba(10, 20, 36, 0.24);
+        padding: 18px;
+      }
 
-    function showFeedback(productId, message, isSuccess) {
-      const product = products.find((p) => p.id === productId);
-      if (!product) return;
+      .modal-card h3 {
+        margin: 0 0 8px;
+      }
 
-      const idx = products.indexOf(product);
-      const feedbackEl = document.getElementById(`feedback-${idx}`);
-      feedbackEl.className = `purchase-feedback ${isSuccess ? "purchase-success" : "purchase-error"}`;
-      feedbackEl.textContent = message;
-      feedbackEl.style.display = "block";
+      .modal-card p {
+        margin: 0;
+        color: #41536f;
+      }
 
-      setTimeout(() => {
-        feedbackEl.style.display = "none";
-      }, 4000);
-    }
+      .modal-actions {
+        margin-top: 14px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+      }
 
-    document
-      .getElementById("question-input")
-      .addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-          askProductQuestion();
+      @media (max-width: 760px) {
+        .hero h1 {
+          font-size: 22px;
         }
-      });
 
-    setupMcpBridge();
-    load();
-  </script>
-</body>
+        .search {
+          grid-template-columns: 1fr;
+        }
 
+        .product {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      window.__SERVER_ORIGIN = "{{SERVER_ORIGIN}}";
+      window.__STORE_PURCHASE_DEEPLINK = "{{STORE_PURCHASE_DEEPLINK}}";
+    </script>
+    <script
+      type="module"
+      src="{{SERVER_ORIGIN}}/assets/store-widget.js"
+    ></script>
+  </body>
 </html>

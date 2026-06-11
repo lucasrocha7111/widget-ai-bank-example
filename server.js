@@ -1,4 +1,4 @@
-import { createServer } from "node:http";
+import express from "express";
 import { readFileSync, writeFileSync } from "node:fs";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import {
@@ -12,6 +12,9 @@ import { z } from "zod";
 
 const port = Number(process.env.PORT ?? 8787);
 const serverOrigin = process.env.SERVER_ORIGIN ?? `http://localhost:${port}`;
+const storePurchaseDeepLinkTemplate =
+  process.env.STORE_PURCHASE_DEEPLINK ??
+  `${serverOrigin}/store?productId={{productId}}&usePoints={{usePoints}}`;
 const oauthEnabled = String(process.env.OAUTH_ENABLED ?? "false") === "true";
 const oauthIssuer = process.env.OAUTH_ISSUER ?? "";
 const oauthAudience = process.env.OAUTH_AUDIENCE ?? "";
@@ -111,6 +114,12 @@ function buildProductDetailPage(
     .replace(/\{\{PRODUCT_ID\}\}/g, productId)
     .replace(/\{\{PRODUCT_DATA\}\}/g, serializeForInlineScript(productData))
     .replace(/\{\{USER_DATA\}\}/g, serializeForInlineScript(userData));
+}
+
+function buildStorePage() {
+  return rawStoreHtml
+    .replace(/\{\{SERVER_ORIGIN\}\}/g, serverOrigin)
+    .replace(/\{\{STORE_PURCHASE_DEEPLINK\}\}/g, storePurchaseDeepLinkTemplate);
 }
 
 function toToolSafeName(value) {
@@ -240,12 +249,15 @@ function createTodoServer() {
         {
           uri: "ui://widget/store.html",
           mimeType: RESOURCE_MIME_TYPE,
-          text: rawStoreHtml.replace(/\{\{SERVER_ORIGIN\}\}/g, serverOrigin),
+          text: buildStorePage(),
           _meta: {
             ui: {
               csp: {
                 connectDomains: [serverOrigin],
-                resourceDomains: ["https://store.storeimages.cdn-apple.com"],
+                resourceDomains: [
+                  serverOrigin,
+                  "https://store.storeimages.cdn-apple.com",
+                ],
               },
             },
           },
@@ -601,271 +613,234 @@ function createTodoServer() {
 
 const MCP_PATH = "/mcp";
 
-const httpServer = createServer(async (req, res) => {
-  if (!req.url) {
-    res.writeHead(400).end("Missing URL");
+const app = express();
+
+app.use("/assets", (req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "content-type");
+  if (req.method === "OPTIONS") {
+    res.status(204).end();
     return;
   }
+  next();
+});
 
-  const url = new URL(req.url, `http://${req.headers.host ?? "localhost"}`);
+app.use("/assets", express.static("public/assets"));
 
-  if (req.method === "OPTIONS" && url.pathname === MCP_PATH) {
-    res.writeHead(204, {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-      "Access-Control-Allow-Headers":
-        "authorization, content-type, mcp-session-id",
-      "Access-Control-Expose-Headers": "Mcp-Session-Id",
-    });
-    res.end();
-    return;
-  }
+app.options(MCP_PATH, (_req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "authorization, content-type, mcp-session-id",
+  );
+  res.setHeader("Access-Control-Expose-Headers", "Mcp-Session-Id");
+  res.status(204).end();
+});
 
-  if (
-    req.method === "OPTIONS" &&
-    (url.pathname === "/products" ||
-      url.pathname === "/products/search" ||
-      url.pathname.startsWith("/products/") ||
-      url.pathname.startsWith("/users/") ||
-      url.pathname === "/purchase")
-  ) {
-    res.writeHead(204, {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-      "Access-Control-Allow-Headers": "authorization, content-type",
-    });
-    res.end();
-    return;
-  }
+app.options(
+  ["/products", "/products/search", "/products/*", "/users/*", "/purchase"],
+  (_req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "authorization, content-type",
+    );
+    res.status(204).end();
+  },
+);
 
-  if (isProtectedPath(url.pathname) && req.method !== "OPTIONS") {
+app.use(async (req, res, next) => {
+  if (isProtectedPath(req.path) && req.method !== "OPTIONS") {
     const authorized = await requireOAuth(req, res);
     if (!authorized) return;
   }
-
-  if (req.method === "GET" && url.pathname === "/products/search") {
-    try {
-      res.setHeader("Access-Control-Allow-Origin", "*");
-      const query = (url.searchParams.get("q") || "").trim();
-      if (!query) {
-        res
-          .writeHead(400, { "content-type": "application/json" })
-          .end(JSON.stringify({ error: "missing query" }));
-        return;
-      }
-
-      const products = loadProducts();
-      const product = findProductByQuery(products, query);
-      const answer = buildProductAnswer(product, query);
-      res.writeHead(200, { "content-type": "application/json" }).end(
-        JSON.stringify({
-          query,
-          found: Boolean(product),
-          product: product ?? null,
-          answer,
-        }),
-      );
-    } catch (err) {
-      res
-        .writeHead(500)
-        .end(JSON.stringify({ error: "failed to search products" }));
-    }
-    return;
-  }
-
-  if (req.method === "GET" && url.pathname.startsWith("/products/")) {
-    try {
-      res.setHeader("Access-Control-Allow-Origin", "*");
-      const id = url.pathname.split("/").pop();
-      const products = loadProducts();
-      const product = products.find((p) => p.id === id);
-      if (!product) {
-        res
-          .writeHead(404, { "content-type": "application/json" })
-          .end(JSON.stringify({ error: "product not found" }));
-        return;
-      }
-      res
-        .writeHead(200, { "content-type": "application/json" })
-        .end(JSON.stringify(product));
-    } catch (err) {
-      res
-        .writeHead(500)
-        .end(JSON.stringify({ error: "failed to load product" }));
-    }
-    return;
-  }
-
-  if (req.method === "GET" && url.pathname === "/") {
-    res.writeHead(200, { "content-type": "text/plain" }).end("Todo MCP server");
-    return;
-  }
-
-  // Serve store UI
-  if (
-    req.method === "GET" &&
-    (url.pathname === "/store" || url.pathname === "/store.html")
-  ) {
-    res
-      .writeHead(200, { "content-type": "text/html" })
-      .end(rawStoreHtml.replace(/\{\{SERVER_ORIGIN\}\}/g, serverOrigin));
-    return;
-  }
-
-  if (req.method === "GET" && url.pathname === "/store/product.html") {
-    const productId = (url.searchParams.get("id") || "").trim();
-    const products = loadProducts();
-    const users = loadUsers();
-    const product = products.find((p) => p.id === productId) ?? null;
-    const defaultUser =
-      users.find((u) => u.id === "user-1") ?? users[0] ?? null;
-    res
-      .writeHead(200, { "content-type": "text/html" })
-      .end(buildProductDetailPage(productId, product, defaultUser));
-    return;
-  }
-
-  if (req.method === "GET" && url.pathname.startsWith("/store/product/")) {
-    const productId = (url.pathname.split("/").pop() || "").trim();
-    const products = loadProducts();
-    const users = loadUsers();
-    const product = products.find((p) => p.id === productId) ?? null;
-    const defaultUser =
-      users.find((u) => u.id === "user-1") ?? users[0] ?? null;
-    res
-      .writeHead(200, { "content-type": "text/html" })
-      .end(buildProductDetailPage(productId, product, defaultUser));
-    return;
-  }
-
-  // API to list products
-  if (req.method === "GET" && url.pathname === "/products") {
-    try {
-      res.setHeader("Access-Control-Allow-Origin", "*");
-      const products = loadProducts();
-      res
-        .writeHead(200, { "content-type": "application/json" })
-        .end(JSON.stringify(products));
-    } catch (err) {
-      res
-        .writeHead(500)
-        .end(JSON.stringify({ error: "failed to load products" }));
-    }
-    return;
-  }
-
-  // API to get user by id
-  if (req.method === "GET" && url.pathname.startsWith("/users/")) {
-    try {
-      res.setHeader("Access-Control-Allow-Origin", "*");
-      const id = url.pathname.split("/").pop();
-      const users = loadUsers();
-      const user = users.find((u) => u.id === id);
-      if (!user) {
-        res
-          .writeHead(404, { "content-type": "application/json" })
-          .end(JSON.stringify({ error: "user not found" }));
-        return;
-      }
-      res
-        .writeHead(200, { "content-type": "application/json" })
-        .end(JSON.stringify(user));
-    } catch (err) {
-      res.writeHead(500).end(JSON.stringify({ error: "failed to load user" }));
-    }
-    return;
-  }
-
-  // Purchase endpoint
-  if (req.method === "POST" && url.pathname === "/purchase") {
-    try {
-      res.setHeader("Access-Control-Allow-Origin", "*");
-      res.setHeader("Access-Control-Allow-Headers", "content-type");
-      let body = "";
-      for await (const chunk of req) body += chunk;
-      const data = JSON.parse(body || "{}");
-      const { userId, productId, usePoints } = data;
-      if (!userId || !productId) {
-        res
-          .writeHead(400, { "content-type": "application/json" })
-          .end(JSON.stringify({ error: "missing userId or productId" }));
-        return;
-      }
-
-      const products = loadProducts();
-      const users = loadUsers();
-      const product = products.find((p) => p.id === productId);
-      const user = users.find((u) => u.id === userId);
-      if (!product) {
-        res
-          .writeHead(404, { "content-type": "application/json" })
-          .end(JSON.stringify({ error: "product not found" }));
-        return;
-      }
-      if (!user) {
-        res
-          .writeHead(404, { "content-type": "application/json" })
-          .end(JSON.stringify({ error: "user not found" }));
-        return;
-      }
-
-      const blocks = Math.floor(user.points / 100);
-      const discountPercent = Math.min(20, blocks * 5);
-      const discount = usePoints ? (product.price * discountPercent) / 100 : 0;
-      const totalPaid = Math.max(0, product.price - discount);
-
-      if (usePoints && blocks > 0) {
-        const pointsToConsume = blocks * 100;
-        user.points = Math.max(0, user.points - pointsToConsume);
-      }
-      const pointsEarned = Math.floor(totalPaid);
-      user.points = (user.points || 0) + pointsEarned;
-      saveUsers(users);
-
-      res
-        .writeHead(200, { "content-type": "application/json" })
-        .end(JSON.stringify({ productId, totalPaid, discountPercent, user }));
-    } catch (err) {
-      console.error(err);
-      res
-        .writeHead(500, { "content-type": "application/json" })
-        .end(JSON.stringify({ error: "purchase failed" }));
-    }
-    return;
-  }
-
-  const MCP_METHODS = new Set(["POST", "GET", "DELETE"]);
-  if (url.pathname === MCP_PATH && req.method && MCP_METHODS.has(req.method)) {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Expose-Headers", "Mcp-Session-Id");
-
-    const server = createTodoServer();
-    const transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: undefined, // stateless mode
-      enableJsonResponse: true,
-    });
-
-    res.on("close", () => {
-      transport.close();
-      server.close();
-    });
-
-    try {
-      await server.connect(transport);
-      await transport.handleRequest(req, res);
-    } catch (error) {
-      console.error("Error handling MCP request:", error);
-      if (!res.headersSent) {
-        res.writeHead(500).end("Internal server error");
-      }
-    }
-    return;
-  }
-
-  res.writeHead(404).end("Not Found");
+  next();
 });
 
-httpServer.listen(port, () => {
+app.get("/", (_req, res) => {
+  res.type("text/plain").status(200).send("Todo MCP server");
+});
+
+app.get("/store", (_req, res) => {
+  res.type("text/html").status(200).send(buildStorePage());
+});
+
+app.get("/store.html", (_req, res) => {
+  res.type("text/html").status(200).send(buildStorePage());
+});
+
+app.get("/store/product.html", (req, res) => {
+  const productId = String(req.query.id || "").trim();
+  const products = loadProducts();
+  const users = loadUsers();
+  const product = products.find((p) => p.id === productId) ?? null;
+  const defaultUser = users.find((u) => u.id === "user-1") ?? users[0] ?? null;
+  res
+    .type("text/html")
+    .status(200)
+    .send(buildProductDetailPage(productId, product, defaultUser));
+});
+
+app.get("/store/product/:id", (req, res) => {
+  const productId = String(req.params.id || "").trim();
+  const products = loadProducts();
+  const users = loadUsers();
+  const product = products.find((p) => p.id === productId) ?? null;
+  const defaultUser = users.find((u) => u.id === "user-1") ?? users[0] ?? null;
+  res
+    .type("text/html")
+    .status(200)
+    .send(buildProductDetailPage(productId, product, defaultUser));
+});
+
+app.get("/products/search", (req, res) => {
+  try {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    const query = String(req.query.q || "").trim();
+    if (!query) {
+      res.status(400).json({ error: "missing query" });
+      return;
+    }
+
+    const products = loadProducts();
+    const product = findProductByQuery(products, query);
+    const answer = buildProductAnswer(product, query);
+    res.status(200).json({
+      query,
+      found: Boolean(product),
+      product: product ?? null,
+      answer,
+    });
+  } catch (err) {
+    res.status(500).json({ error: "failed to search products" });
+  }
+});
+
+app.get("/products/:id", (req, res) => {
+  try {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    const id = req.params.id;
+    const products = loadProducts();
+    const product = products.find((p) => p.id === id);
+    if (!product) {
+      res.status(404).json({ error: "product not found" });
+      return;
+    }
+    res.status(200).json(product);
+  } catch (err) {
+    res.status(500).json({ error: "failed to load product" });
+  }
+});
+
+app.get("/products", (_req, res) => {
+  try {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    const products = loadProducts();
+    res.status(200).json(products);
+  } catch (err) {
+    res.status(500).json({ error: "failed to load products" });
+  }
+});
+
+app.get("/users/:id", (req, res) => {
+  try {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    const id = req.params.id;
+    const users = loadUsers();
+    const user = users.find((u) => u.id === id);
+    if (!user) {
+      res.status(404).json({ error: "user not found" });
+      return;
+    }
+    res.status(200).json(user);
+  } catch (err) {
+    res.status(500).json({ error: "failed to load user" });
+  }
+});
+
+app.post("/purchase", express.json(), (req, res) => {
+  try {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Headers", "content-type");
+    const { userId, productId, usePoints } = req.body || {};
+    if (!userId || !productId) {
+      res.status(400).json({ error: "missing userId or productId" });
+      return;
+    }
+
+    const products = loadProducts();
+    const users = loadUsers();
+    const product = products.find((p) => p.id === productId);
+    const user = users.find((u) => u.id === userId);
+    if (!product) {
+      res.status(404).json({ error: "product not found" });
+      return;
+    }
+    if (!user) {
+      res.status(404).json({ error: "user not found" });
+      return;
+    }
+
+    const blocks = Math.floor(user.points / 100);
+    const discountPercent = Math.min(20, blocks * 5);
+    const discount = usePoints ? (product.price * discountPercent) / 100 : 0;
+    const totalPaid = Math.max(0, product.price - discount);
+
+    if (usePoints && blocks > 0) {
+      const pointsToConsume = blocks * 100;
+      user.points = Math.max(0, user.points - pointsToConsume);
+    }
+    const pointsEarned = Math.floor(totalPaid);
+    user.points = (user.points || 0) + pointsEarned;
+    saveUsers(users);
+
+    res.status(200).json({ productId, totalPaid, discountPercent, user });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "purchase failed" });
+  }
+});
+
+app.all(MCP_PATH, async (req, res) => {
+  const MCP_METHODS = new Set(["POST", "GET", "DELETE"]);
+  if (!MCP_METHODS.has(req.method)) {
+    res.status(405).send("Method Not Allowed");
+    return;
+  }
+
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Expose-Headers", "Mcp-Session-Id");
+
+  const server = createTodoServer();
+  const transport = new StreamableHTTPServerTransport({
+    sessionIdGenerator: undefined, // stateless mode
+    enableJsonResponse: true,
+  });
+
+  res.on("close", () => {
+    transport.close();
+    server.close();
+  });
+
+  try {
+    await server.connect(transport);
+    await transport.handleRequest(req, res);
+  } catch (error) {
+    console.error("Error handling MCP request:", error);
+    if (!res.headersSent) {
+      res.status(500).send("Internal server error");
+    }
+  }
+});
+
+app.use((_req, res) => {
+  res.status(404).send("Not Found");
+});
+
+app.listen(port, () => {
   console.log(
     `Todo MCP server listening on http://localhost:${port}${MCP_PATH}`,
   );

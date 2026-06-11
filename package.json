@@ -3,6 +3,9 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "scripts": {
+    "build:store-widget": "bun build ./src/store-widget.tsx --outfile ./public/assets/store-widget.js"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
@@ -12,7 +15,10 @@
   "dependencies": {
     "@modelcontextprotocol/ext-apps": "^1.7.3",
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "express": "^4.21.2",
     "jose": "^5.9.6",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "zod": "^4.4.3"
   }
 }
