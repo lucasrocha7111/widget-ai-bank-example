@@ -1,3 +1,9 @@
+declare global {
+    interface Window {
+        __STORE_PURCHASE_DEEPLINK?: string;
+    }
+}
+
 export const serverOrigin = (window.__SERVER_ORIGIN || "").replace(/\/$/, "");
 export const apiOrigin = serverOrigin || window.location.origin;
 export const purchaseDeepLinkTemplate =

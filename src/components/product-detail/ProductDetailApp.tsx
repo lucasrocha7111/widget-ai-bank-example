@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
 import type { Product, User } from "../../types";
 import { computeDiscount, formatPrice } from "../../utils/currency";
-import { apiOrigin, resolveProductId, serverOrigin } from "../../utils/urls";
+import {
+    apiOrigin,
+    buildPurchaseLink,
+    resolveProductId,
+    serverOrigin,
+} from "../../utils/urls";
 import ProductSpecRow from "./ProductSpecRow";
 
 declare global {
@@ -96,20 +101,16 @@ export default function ProductDetailApp() {
     const stockText = product?.stock === 0 ? "Sem estoque" : "Em estoque";
     const stockClass = product?.stock === 0 ? "badge out-stock" : "badge in-stock";
 
+    const purchaseLink = product
+        ? buildPurchaseLink(product.id, false)
+        : `${serverOrigin}/store`;
+
     function goBack() {
         window.location.href = `${serverOrigin}/store`;
     }
 
     function goToStorePurchase() {
-        if (!product) {
-            window.open(`${serverOrigin}/store`, "_blank", "noopener,noreferrer");
-            return;
-        }
-        window.open(
-            `${serverOrigin}/store?productId=${encodeURIComponent(product.id)}`,
-            "_blank",
-            "noopener,noreferrer",
-        );
+        window.open(purchaseLink, "_blank", "noopener,noreferrer");
     }
 
     return (
@@ -165,6 +166,14 @@ export default function ProductDetailApp() {
                             <button className="btn btn-buy" type="button" onClick={goToStorePurchase}>
                                 Comprar na loja
                             </button>
+                            <a
+                                className="btn btn-buy"
+                                href={purchaseLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                Comprar na loja
+                            </a>
                         </div>
 
                         <div className="error" style={{ display: error ? "block" : "none" }}>
