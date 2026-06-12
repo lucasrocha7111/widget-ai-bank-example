@@ -195,6 +195,206 @@
         border: 1px solid #f7cccc;
       }
 
+      /* Cover Competitor Price Styles */
+      .cover-btn {
+        margin-top: 14px;
+        width: 100%;
+        border-radius: 12px;
+        border: 2px solid var(--orange-1);
+        padding: 12px 16px;
+        cursor: pointer;
+        background: #fff;
+        color: var(--orange-2);
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.3s ease;
+      }
+
+      .cover-btn:hover {
+        background: #fff8f0;
+      }
+
+      .cover-form {
+        margin-top: 16px;
+        padding: 16px;
+        border: 1px solid #e3e9f3;
+        border-radius: 12px;
+        background: #fcfeff;
+      }
+
+      .form-group {
+        margin-bottom: 12px;
+      }
+
+      .form-group label {
+        display: block;
+        font-weight: 600;
+        font-size: 13px;
+        margin-bottom: 6px;
+        color: var(--ink);
+      }
+
+      .form-group input {
+        width: 100%;
+        border-radius: 8px;
+        border: 1px solid #d9e1ed;
+        padding: 10px 12px;
+        font-size: 14px;
+        box-sizing: border-box;
+      }
+
+      .form-group input:focus {
+        outline: none;
+        border-color: var(--orange-1);
+        box-shadow: 0 0 0 3px rgba(255, 158, 47, 0.1);
+      }
+
+      .form-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .primary-btn,
+      .secondary-btn {
+        border-radius: 8px;
+        border: none;
+        padding: 10px 14px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 13px;
+        flex: 1;
+      }
+
+      .primary-btn {
+        background: linear-gradient(135deg, var(--orange-1), var(--orange-2));
+        color: #fff;
+      }
+
+      .primary-btn:hover:not(:disabled) {
+        opacity: 0.9;
+      }
+
+      .primary-btn:disabled {
+        opacity: 0.6;
+        cursor: default;
+      }
+
+      .secondary-btn {
+        background: #e8ecf4;
+        color: var(--ink);
+      }
+
+      .secondary-btn:hover {
+        background: #d9e1ed;
+      }
+
+      /* Cover Result Styles */
+      .cover-result {
+        margin-top: 16px;
+        padding: 24px;
+        border-radius: 14px;
+        text-align: center;
+      }
+
+      .cover-result.success {
+        background: linear-gradient(135deg, #ecf9ef 0%, #e8f5f8 100%);
+        border: 2px solid #7fdf6f;
+      }
+
+      .cover-success-badge {
+        width: 56px;
+        height: 56px;
+        margin: 0 auto 12px;
+        background: linear-gradient(135deg, #52c41a, #3fa915);
+        color: #fff;
+        font-size: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+      }
+
+      .cover-result h2 {
+        margin: 0 0 16px;
+        font-size: 28px;
+        color: #3fa915;
+      }
+
+      .cover-details {
+        margin: 20px 0;
+        text-align: left;
+        background: rgba(255, 255, 255, 0.6);
+        padding: 16px;
+        border-radius: 10px;
+      }
+
+      .detail-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      }
+
+      .detail-item:last-child {
+        border-bottom: none;
+      }
+
+      .detail-item .label {
+        font-weight: 600;
+        color: var(--ink);
+        font-size: 14px;
+      }
+
+      .detail-item .value {
+        font-size: 14px;
+        color: #41536f;
+      }
+
+      .detail-item .value.original {
+        text-decoration: line-through;
+        color: #9f9f9f;
+      }
+
+      .detail-item .value.price-highlight {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--orange-2);
+      }
+
+      .detail-item .value.savings {
+        font-size: 16px;
+        font-weight: 700;
+        color: #3fa915;
+      }
+
+      .detail-item.highlight {
+        background: rgba(255, 158, 47, 0.1);
+        padding: 12px;
+        border-radius: 8px;
+        margin: 8px 0;
+      }
+
+      .detail-item.discount {
+        background: rgba(82, 196, 26, 0.1);
+        padding: 12px;
+        border-radius: 8px;
+        margin: 8px 0;
+      }
+
+      .cover-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 16px;
+      }
+
+      .cover-actions .primary-btn,
+      .cover-actions .secondary-btn {
+        flex: 1;
+      }
+
       .modal-overlay {
         position: fixed;
         inset: 0;

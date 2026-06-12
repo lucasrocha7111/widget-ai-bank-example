@@ -100,15 +100,75 @@ function buildProductAnswer(product, query) {
     : `Encontrei ${product.name}, mas no momento esta sem estoque. Preco: $${product.price.toFixed(2)}.`;
 }
 
+function processCoverCompetitorPrice(args) {
+  const competitorPrice = Number(args?.competitorPrice);
+  if (!Number.isFinite(competitorPrice) || competitorPrice <= 0) {
+    const message =
+      "Preco do concorrente invalido. Informe um valor numerico maior que zero.";
+    return {
+      canCover: false,
+      product: null,
+      competitorPrice: 0,
+      coveredPrice: 0,
+      discountApplied: 0,
+      currency: args?.currency || "BRL",
+      message,
+    };
+  }
+
+  const products = loadProducts();
+  const requestedId = args?.productId?.trim?.();
+  const query = args?.productName?.trim?.();
+  let product = null;
+
+  if (requestedId) {
+    product = products.find((p) => p.id === requestedId) ?? null;
+  }
+  if (!product && query) {
+    product = findProductByQuery(products, query);
+  }
+
+  const coveredPrice = Number(Math.max(0, competitorPrice - 50).toFixed(2));
+  const discountApplied = Number((competitorPrice - coveredPrice).toFixed(2));
+  const currency = args?.currency?.trim?.() || "BRL";
+  const store = args?.competitorStore?.trim?.();
+  const productLabel = product?.name || query || "esse produto";
+  const where = store ? " na loja " + store : "";
+  const message =
+    "Sim, podemos cobrir o valor de " +
+    productLabel +
+    where +
+    ". Concorrente: " +
+    currency +
+    " " +
+    competitorPrice.toFixed(2) +
+    ". Nossa oferta: " +
+    currency +
+    " " +
+    coveredPrice.toFixed(2) +
+    " (" +
+    currency +
+    " " +
+    discountApplied.toFixed(2) +
+    " a menos).";
+
+  return {
+    canCover: true,
+    product: product ?? null,
+    competitorPrice: Number(competitorPrice.toFixed(2)),
+    coveredPrice,
+    discountApplied,
+    currency,
+    message,
+  };
+}
+
 function serializeForInlineScript(data) {
   return JSON.stringify(data ?? null).replace(/</g, "\\u003c");
 }
 
 function replaceTemplatePlaceholder(template, key, value) {
-  return template.replace(
-    new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, "g"),
-    value,
-  );
+  return template.replace(new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, "g"), value);
 }
 
 function buildProductDetailPage(
@@ -116,11 +176,12 @@ function buildProductDetailPage(
   productData = null,
   userData = null,
 ) {
-  return replaceTemplatePlaceholder(rawProductDetailHtml, "SERVER_ORIGIN", serverOrigin)
-    .replace(
-      new RegExp("\\{\\{\\s*PRODUCT_ID\\s*\\}\\}", "g"),
-      productId,
-    )
+  return replaceTemplatePlaceholder(
+    rawProductDetailHtml,
+    "SERVER_ORIGIN",
+    serverOrigin,
+  )
+    .replace(new RegExp("\\{\\{\\s*PRODUCT_ID\\s*\\}\\}", "g"), productId)
     .replace(
       new RegExp("\\{\\{\\s*PRODUCT_DATA\\s*\\}\\}", "g"),
       serializeForInlineScript(productData),
@@ -151,7 +212,8 @@ function isProtectedPath(pathname) {
     pathname === "/products/search" ||
     pathname.startsWith("/products/") ||
     pathname.startsWith("/users/") ||
-    pathname === "/purchase"
+    pathname === "/purchase" ||
+    pathname === "/cover-competitor-price"
   );
 }
 
@@ -412,6 +474,41 @@ function createTodoServer() {
 
   registerAppTool(
     server,
+    "cover_competitor_price",
+    {
+      title: "Cover competitor price",
+      description:
+        "Use when user asks 'pode cobrir o valor desse produto?' and provides competitor price context. Covers competitor price with BRL 50 discount.",
+      inputSchema: {
+        competitorPrice: z.number().positive(),
+        productName: z.string().optional(),
+        productId: z.string().optional(),
+        competitorStore: z.string().optional(),
+        currency: z.string().optional(),
+        context: z.string().optional(),
+      },
+      outputSchema: {
+        canCover: z.boolean(),
+        product: z.union([productSchema, z.null()]),
+        competitorPrice: z.number(),
+        coveredPrice: z.number(),
+        discountApplied: z.number(),
+        currency: z.string(),
+        message: z.string(),
+      },
+      _meta: { ui: { resourceUri: "ui://widget/store.html" } },
+    },
+    async (args) => {
+      const result = processCoverCompetitorPrice(args);
+      return {
+        content: [{ type: "text", text: result.message }],
+        structuredContent: result,
+      };
+    },
+  );
+
+  registerAppTool(
+    server,
     "open_product_detail",
     {
       title: "Open product detail",
@@ -655,7 +752,14 @@ app.options(MCP_PATH, (_req, res) => {
 });
 
 app.options(
-  ["/products", "/products/search", "/products/*", "/users/*", "/purchase"],
+  [
+    "/products",
+    "/products/search",
+    "/products/*",
+    "/users/*",
+    "/purchase",
+    "/cover-competitor-price",
+  ],
   (_req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
@@ -816,6 +920,19 @@ app.post("/purchase", express.json(), (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "purchase failed" });
+  }
+});
+
+app.post("/cover-competitor-price", express.json(), (req, res) => {
+  try {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Headers", "content-type");
+
+    const result = processCoverCompetitorPrice(req.body || {});
+    res.status(200).json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "cover price check failed" });
   }
 });
 

@@ -140,6 +140,74 @@
         }
       }
     },
+    "/cover-competitor-price": {
+      "post": {
+        "description": "Verifica se conseguimos cobrir (bater) o preco de um concorrente para um produto. Use esta funcao quando o usuario disser frases como: 'voces cobrem esse preco?', 'conseguem bater o preco do concorrente?', 'vi mais barato em outra loja', 'voces dao desconto para cobrir?'. Retorna o preco coberto com desconto de R$50 em relacao ao valor do concorrente.",
+        "operationId": "coverCompetitorPrice",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "competitorPrice": {
+                    "type": "number",
+                    "description": "Preco encontrado no concorrente. Obrigatorio. Deve ser maior que zero."
+                  },
+                  "productId": {
+                    "type": "string",
+                    "description": "ID do produto na nossa loja (opcional, use se souber)."
+                  },
+                  "productName": {
+                    "type": "string",
+                    "description": "Nome ou descricao do produto mencionado pelo usuario (opcional)."
+                  },
+                  "competitorStore": {
+                    "type": "string",
+                    "description": "Nome da loja concorrente onde o usuario viu o preco (opcional)."
+                  },
+                  "currency": {
+                    "type": "string",
+                    "description": "Moeda do preco informado, ex: BRL, USD. Padrao: BRL.",
+                    "default": "BRL"
+                  }
+                },
+                "required": ["competitorPrice"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultado da cobertura de preco",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "canCover": { "type": "boolean" },
+                    "competitorPrice": { "type": "number" },
+                    "coveredPrice": { "type": "number" },
+                    "discountApplied": { "type": "number" },
+                    "currency": { "type": "string" },
+                    "message": { "type": "string" }
+                  },
+                  "required": [
+                    "canCover",
+                    "competitorPrice",
+                    "coveredPrice",
+                    "discountApplied",
+                    "currency",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/purchase": {
       "post": {
         "description": "Finaliza compra de um produto para um usuario.",
