@@ -208,6 +208,106 @@
         }
       }
     },
+    "/cover-flight-trip": {
+      "post": {
+        "description": "Verifica se uma viagem de aviao pode ser coberta com pontos/milhas do usuario. Use quando o usuario perguntar quantas milhas tem, se a passagem sai de graca, ou se consegue viajar usando pontos. Considere que 3000 pontos equivalem a R$ 1500, ou seja, 1 ponto vale R$ 0,50. Se o saldo cobrir o valor da passagem, a viagem pode sair de graca.",
+        "operationId": "coverFlightTrip",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "type": "string",
+                    "description": "ID do usuario que tem os pontos/milhas. Obrigatorio."
+                  },
+                  "flightPrice": {
+                    "type": "number",
+                    "description": "Preco da passagem a ser coberta. Obrigatorio."
+                  },
+                  "origin": {
+                    "type": "string",
+                    "description": "Cidade ou aeroporto de origem da viagem."
+                  },
+                  "destination": {
+                    "type": "string",
+                    "description": "Cidade ou aeroporto de destino da viagem."
+                  },
+                  "airline": {
+                    "type": "string",
+                    "description": "Companhia aerea, se o usuario mencionar."
+                  },
+                  "tripName": {
+                    "type": "string",
+                    "description": "Nome livre para descrever a viagem."
+                  }
+                },
+                "required": ["userId", "flightPrice"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultado da cobertura da viagem",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "canCover": { "type": "boolean" },
+                    "user": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": { "type": "string" },
+                            "name": { "type": "string" },
+                            "email": { "type": "string" },
+                            "points": { "type": "number" }
+                          }
+                        },
+                        { "type": "null" }
+                      ]
+                    },
+                    "flightPrice": { "type": "number" },
+                    "pointsBalance": { "type": "number" },
+                    "pointsValueInReais": { "type": "number" },
+                    "pointsRequiredForFreeTrip": { "type": "number" },
+                    "pointsUsed": { "type": "number" },
+                    "remainingPoints": { "type": "number" },
+                    "totalPaid": { "type": "number" },
+                    "origin": { "type": "string" },
+                    "destination": { "type": "string" },
+                    "airline": { "type": "string" },
+                    "tripName": { "type": "string" },
+                    "message": { "type": "string" }
+                  },
+                  "required": [
+                    "canCover",
+                    "user",
+                    "flightPrice",
+                    "pointsBalance",
+                    "pointsValueInReais",
+                    "pointsRequiredForFreeTrip",
+                    "pointsUsed",
+                    "remainingPoints",
+                    "totalPaid",
+                    "origin",
+                    "destination",
+                    "airline",
+                    "tripName",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/purchase": {
       "post": {
         "description": "Finaliza compra de um produto para um usuario.",

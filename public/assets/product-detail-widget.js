@@ -23679,7 +23679,21 @@ function computeDiscount(points) {
 // src/utils/urls.ts
 var serverOrigin = (window.__SERVER_ORIGIN || "").replace(/\/$/, "");
 var apiOrigin = serverOrigin || window.location.origin;
+var defaultUserId = "user-1";
 var purchaseDeepLinkTemplate = window.__STORE_PURCHASE_DEEPLINK || `${apiOrigin}/store?productId={{productId}}&usePoints={{usePoints}}`;
+function buildPurchaseLink(productId, usePoints) {
+  let link = purchaseDeepLinkTemplate;
+  if (link.includes("{{productId}}")) {
+    link = link.replaceAll("{{productId}}", encodeURIComponent(productId));
+  } else {
+    const separator = link.includes("?") ? "&" : "?";
+    link = `${link}${separator}productId=${encodeURIComponent(productId)}`;
+  }
+  if (link.includes("{{usePoints}}")) {
+    link = link.replaceAll("{{usePoints}}", usePoints ? "1" : "0");
+  }
+  return link;
+}
 function resolveProductId() {
   const parts = window.location.pathname.split("/").filter(Boolean);
   if (parts.length >= 3 && parts[0] === "store" && parts[1] === "product") {
@@ -23732,7 +23746,7 @@ function ProductDetailApp() {
           fetch(`${apiOrigin}/products/${encodeURIComponent(productId)}`, {
             signal: controller.signal
           }),
-          fetch(`${apiOrigin}/users/user-1`, { signal: controller.signal })
+          fetch(`${apiOrigin}/users/${defaultUserId}`, { signal: controller.signal })
         ]);
         const productData = await productResponse.json();
         const userData = await userResponse.json();
@@ -23773,15 +23787,12 @@ function ProductDetailApp() {
   const discountedPrice = product ? product.price * (1 - discountPercent / 100) : 0;
   const stockText = product?.stock === 0 ? "Sem estoque" : "Em estoque";
   const stockClass = product?.stock === 0 ? "badge out-stock" : "badge in-stock";
+  const purchaseLink = product ? buildPurchaseLink(product.id, false) : `${serverOrigin}/store`;
   function goBack() {
     window.location.href = `${serverOrigin}/store`;
   }
   function goToStorePurchase() {
-    if (!product) {
-      window.open(`${serverOrigin}/store`, "_blank", "noopener,noreferrer");
-      return;
-    }
-    window.open(`${serverOrigin}/store?productId=${encodeURIComponent(product.id)}`, "_blank", "noopener,noreferrer");
+    window.open(purchaseLink, "_blank", "noopener,noreferrer");
   }
   return /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
     className: "shell",
@@ -23863,13 +23874,22 @@ function ProductDetailApp() {
                   }, undefined, true, undefined, this),
                   /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
                     className: "footer",
-                    children: /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("button", {
-                      className: "btn btn-buy",
-                      type: "button",
-                      onClick: goToStorePurchase,
-                      children: "Comprar na loja"
-                    }, undefined, false, undefined, this)
-                  }, undefined, false, undefined, this),
+                    children: [
+                      /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("button", {
+                        className: "btn btn-buy",
+                        type: "button",
+                        onClick: goToStorePurchase,
+                        children: "Comprar na loja"
+                      }, undefined, false, undefined, this),
+                      /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("a", {
+                        className: "btn btn-buy",
+                        href: purchaseLink,
+                        target: "_blank",
+                        rel: "noopener noreferrer",
+                        children: "Comprar na loja"
+                      }, undefined, false, undefined, this)
+                    ]
+                  }, undefined, true, undefined, this),
                   /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
                     className: "error",
                     style: { display: error ? "block" : "none" },

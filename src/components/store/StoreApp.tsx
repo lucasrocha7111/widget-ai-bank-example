@@ -1,7 +1,11 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import type { Product } from "../../types";
 import { currency } from "../../utils/currency";
-import { apiOrigin, buildPurchaseLink } from "../../utils/urls";
+import {
+  apiOrigin,
+  defaultUserId,
+  purchaseAuthDeepLink,
+} from "../../utils/urls";
 import ProductCard from "./ProductCard";
 import PurchaseModal from "./PurchaseModal";
 
@@ -21,6 +25,41 @@ export default function StoreApp() {
   const [competitorStore, setCompetitorStore] = useState("");
   const [coverResult, setCoverResult] = useState<any>(null);
   const [coverBusy, setCoverBusy] = useState(false);
+
+  const [showFlightForm, setShowFlightForm] = useState(false);
+  const [flightPrice, setFlightPrice] = useState("");
+  const [flightOrigin, setFlightOrigin] = useState("");
+  const [flightDestination, setFlightDestination] = useState("");
+  const [flightAirline, setFlightAirline] = useState("");
+  const [flightResult, setFlightResult] = useState<any>(null);
+  const [flightBusy, setFlightBusy] = useState(false);
+  const [userPoints, setUserPoints] = useState<number | null>(null);
+  const [userLoading, setUserLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadUserPoints() {
+      try {
+        const response = await fetch(`${apiOrigin}/users/${defaultUserId}`);
+        const data = await response.json();
+
+        if (!active || !response.ok) return;
+
+        setUserPoints(Number(data?.points ?? 0));
+      } catch {
+        if (active) setUserPoints(0);
+      } finally {
+        if (active) setUserLoading(false);
+      }
+    }
+
+    loadUserPoints();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const detailUrl = useMemo(() => {
     if (!selected) return "";
@@ -75,11 +114,10 @@ export default function StoreApp() {
   function confirmPurchase() {
     if (!selected) return;
 
-    const link = buildPurchaseLink(selected.id, purchaseWithPoints);
     setFeedbackKind("ok");
-    setFeedback("Redirecionando para finalizar a compra no app...");
+    setFeedback("Abrindo autenticacao no app BankPOC...");
     setModalOpen(false);
-    window.open(link, "_blank", "noopener,noreferrer");
+    window.location.href = purchaseAuthDeepLink;
   }
 
   async function handleCoverCompetitorPrice(
@@ -155,6 +193,78 @@ export default function StoreApp() {
     setFeedback("");
   }
 
+  async function handleFlightCoverage(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const price = parseFloat(flightPrice.trim());
+
+    if (!price || price <= 0) {
+      setFeedbackKind("err");
+      setFeedback("Por favor, informe o valor da passagem.");
+      return;
+    }
+
+    setFlightBusy(true);
+    setFeedbackKind("ok");
+    setFeedback("Calculando cobertura da passagem...");
+    setFlightResult(null);
+
+    try {
+      const response = await fetch(`${apiOrigin}/cover-flight-trip`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: defaultUserId,
+          flightPrice: price,
+          origin: flightOrigin.trim() || undefined,
+          destination: flightDestination.trim() || undefined,
+          airline: flightAirline.trim() || undefined,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Erro ao processar a viagem");
+      }
+
+      if (result && result.canCover !== undefined) {
+        setFlightResult(result);
+        setFeedbackKind("ok");
+        setFeedback("");
+        setShowFlightForm(false);
+      } else {
+        throw new Error("Resposta inesperada do servidor");
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Erro ao processar a viagem";
+      setFeedbackKind("err");
+      setFeedback(message);
+      setFlightResult(null);
+    } finally {
+      setFlightBusy(false);
+    }
+  }
+
+  function clearFlightResult() {
+    setFlightResult(null);
+    setFlightPrice("");
+    setFlightOrigin("");
+    setFlightDestination("");
+    setFlightAirline("");
+    setShowFlightForm(false);
+    setFeedback("");
+  }
+
+  const pointsLabel = userLoading
+    ? "carregando..."
+    : `${userPoints ?? 0} pontos`;
+  const pointsValueLabel = userLoading
+    ? "R$ 0,00"
+    : currency((userPoints ?? 0) * 0.5);
+
   return (
     <div className="shell">
       <header className="hero">
@@ -192,6 +302,174 @@ export default function StoreApp() {
           <p className={feedbackKind === "ok" ? "feedback ok" : "feedback err"}>
             {feedback}
           </p>
+        ) : null}
+
+        {!flightResult && !showFlightForm ? (
+          <section className="flight-hero">
+            <div className="flight-art" aria-hidden="true">
+              <div className="flight-sky" />
+              <div className="flight-cloud cloud-a" />
+              <div className="flight-cloud cloud-b" />
+              <div className="flight-cloud cloud-c" />
+              <div className="flight-trail" />
+              <div className="flight-plane">✈</div>
+            </div>
+
+            <div className="flight-copy">
+              <p className="flight-kicker">Viagem com pontos</p>
+              <h2>Cobrir passagem de avião</h2>
+              <p>
+                Veja se sua viagem pode sair de graça usando seus pontos como
+                milhas.
+              </p>
+              <div className="flight-points">
+                <span className="flight-points-label">Seus pontos</span>
+                <strong>{pointsLabel}</strong>
+                <span className="flight-points-note">
+                  Equivalem a {pointsValueLabel} em cobertura.
+                </span>
+              </div>
+              <button
+                className="flight-btn"
+                onClick={() => setShowFlightForm(true)}
+              >
+                Ver cobertura da passagem
+              </button>
+            </div>
+          </section>
+        ) : null}
+
+        {showFlightForm ? (
+          <form className="flight-form" onSubmit={handleFlightCoverage}>
+            <div className="flight-form-header">
+              <div>
+                <p className="flight-kicker">Aeronave</p>
+                <h3>Simular cobertura da viagem</h3>
+              </div>
+              <button
+                type="button"
+                className="secondary-btn"
+                onClick={clearFlightResult}
+              >
+                Fechar
+              </button>
+            </div>
+
+            <div className="flight-form-grid">
+              <div className="form-group">
+                <label>Valor da passagem</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={flightPrice}
+                  onChange={(event) => setFlightPrice(event.target.value)}
+                  placeholder="Ex: 1299,90"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Origem</label>
+                <input
+                  type="text"
+                  value={flightOrigin}
+                  onChange={(event) => setFlightOrigin(event.target.value)}
+                  placeholder="Ex: São Paulo"
+                />
+              </div>
+              <div className="form-group">
+                <label>Destino</label>
+                <input
+                  type="text"
+                  value={flightDestination}
+                  onChange={(event) => setFlightDestination(event.target.value)}
+                  placeholder="Ex: Rio de Janeiro"
+                />
+              </div>
+              <div className="form-group">
+                <label>Companhia aérea</label>
+                <input
+                  type="text"
+                  value={flightAirline}
+                  onChange={(event) => setFlightAirline(event.target.value)}
+                  placeholder="Ex: Azul"
+                />
+              </div>
+            </div>
+
+            <div className="form-actions flight-actions">
+              <button
+                type="submit"
+                disabled={flightBusy}
+                className="primary-btn"
+              >
+                {flightBusy ? "Calculando..." : "Calcular cobertura"}
+              </button>
+              <button
+                type="button"
+                className="secondary-btn"
+                onClick={() => {
+                  setShowFlightForm(false);
+                  setFlightPrice("");
+                  setFlightOrigin("");
+                  setFlightDestination("");
+                  setFlightAirline("");
+                }}
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        ) : null}
+
+        {flightResult ? (
+          <section
+            className={`flight-result ${flightResult.canCover ? "success" : "pending"}`}
+          >
+            <div className="flight-result-top">
+              <div className="flight-result-plane">✈</div>
+              <div>
+                <p className="flight-kicker">Resultado da viagem</p>
+                <h2>
+                  {flightResult.canCover
+                    ? "Sua passagem pode sair de graça"
+                    : "Ainda falta saldo para zerar a passagem"}
+                </h2>
+                <p>{flightResult.message}</p>
+              </div>
+            </div>
+
+            <div className="flight-meter">
+              <div className="flight-meter-row">
+                <span>Pontos do usuário</span>
+                <strong>{flightResult.pointsBalance}</strong>
+              </div>
+              <div className="flight-meter-row">
+                <span>Valor em reais</span>
+                <strong>{currency(flightResult.pointsValueInReais)}</strong>
+              </div>
+              <div className="flight-meter-row highlight">
+                <span>Total da passagem</span>
+                <strong>{currency(flightResult.flightPrice)}</strong>
+              </div>
+              <div className="flight-meter-row">
+                <span>Saldo restante</span>
+                <strong>{flightResult.remainingPoints} pontos</strong>
+              </div>
+            </div>
+
+            <div className="flight-actions result-actions">
+              <button
+                className="primary-btn"
+                onClick={() => goToStorePurchase(false)}
+              >
+                Autenticar e concluir
+              </button>
+              <button className="secondary-btn" onClick={clearFlightResult}>
+                Nova simulação
+              </button>
+            </div>
+          </section>
         ) : null}
 
         {/* Cover Competitor Price Form */}

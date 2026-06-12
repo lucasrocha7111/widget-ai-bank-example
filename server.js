@@ -163,6 +163,114 @@ function processCoverCompetitorPrice(args) {
   };
 }
 
+function processCoverFlightTrip(args) {
+  const userId = args?.userId?.trim?.();
+  const flightPrice = Number(args?.flightPrice);
+  const origin = args?.origin?.trim?.() || "";
+  const destination = args?.destination?.trim?.() || "";
+  const airline = args?.airline?.trim?.() || "";
+  const tripName = args?.tripName?.trim?.() || "";
+  const pointsToRealRate = 0.5;
+
+  if (!userId) {
+    return {
+      canCover: false,
+      user: null,
+      flightPrice: 0,
+      pointsBalance: 0,
+      pointsValueInReais: 0,
+      pointsRequiredForFreeTrip: 0,
+      pointsUsed: 0,
+      remainingPoints: 0,
+      totalPaid: 0,
+      origin,
+      destination,
+      airline,
+      tripName,
+      message: "Informe o userId para calcular a cobertura da viagem.",
+    };
+  }
+
+  if (!Number.isFinite(flightPrice) || flightPrice <= 0) {
+    return {
+      canCover: false,
+      user: null,
+      flightPrice: 0,
+      pointsBalance: 0,
+      pointsValueInReais: 0,
+      pointsRequiredForFreeTrip: 0,
+      pointsUsed: 0,
+      remainingPoints: 0,
+      totalPaid: 0,
+      origin,
+      destination,
+      airline,
+      tripName,
+      message:
+        "Preco da viagem invalido. Informe um valor numerico maior que zero.",
+    };
+  }
+
+  const users = loadUsers();
+  const user = users.find((entry) => entry.id === userId) ?? null;
+  const pointsBalance = Number(user?.points || 0);
+  const pointsValueInReais = Number(
+    (pointsBalance * pointsToRealRate).toFixed(2),
+  );
+  const pointsRequiredForFreeTrip = Math.ceil(flightPrice / pointsToRealRate);
+  const pointsUsed = Math.min(pointsBalance, pointsRequiredForFreeTrip);
+  const remainingPoints = Math.max(0, pointsBalance - pointsUsed);
+  const totalPaid = Number(
+    Math.max(0, flightPrice - pointsValueInReais).toFixed(2),
+  );
+  const canCover = totalPaid === 0;
+  const routeLabel =
+    tripName ||
+    (origin && destination ? `${origin} para ${destination}` : "essa viagem");
+  const airlineLabel = airline ? ` na ${airline}` : "";
+
+  const message = canCover
+    ? "Sim, a viagem " +
+      routeLabel +
+      airlineLabel +
+      " pode sair de graca. Voce tem " +
+      pointsBalance +
+      " pontos, equivalentes a R$ " +
+      pointsValueInReais.toFixed(2) +
+      ". O valor da passagem e R$ " +
+      flightPrice.toFixed(2) +
+      "."
+    : "A viagem " +
+      routeLabel +
+      airlineLabel +
+      " ainda nao sai de graca. Voce tem " +
+      pointsBalance +
+      " pontos, equivalentes a R$ " +
+      pointsValueInReais.toFixed(2) +
+      ". A passagem custa R$ " +
+      flightPrice.toFixed(2) +
+      ", entao faltam R$ " +
+      Math.max(0, flightPrice - pointsValueInReais).toFixed(2) +
+      ".";
+
+  return {
+    canCover,
+    user,
+    flightPrice: Number(flightPrice.toFixed(2)),
+    pointsBalance,
+    pointsValueInReais,
+    pointsRequiredForFreeTrip,
+    pointsUsed,
+    remainingPoints,
+    totalPaid,
+    origin,
+    destination,
+    airline,
+    tripName: routeLabel,
+    message,
+  };
+}
+
 function serializeForInlineScript(data) {
   return JSON.stringify(data ?? null).replace(/</g, "\\u003c");
 }
@@ -213,7 +321,8 @@ function isProtectedPath(pathname) {
     pathname.startsWith("/products/") ||
     pathname.startsWith("/users/") ||
     pathname === "/purchase" ||
-    pathname === "/cover-competitor-price"
+    pathname === "/cover-competitor-price" ||
+    pathname === "/cover-flight-trip"
   );
 }
 
@@ -509,6 +618,48 @@ function createTodoServer() {
 
   registerAppTool(
     server,
+    "cover_flight_trip",
+    {
+      title: "Cover flight trip",
+      description:
+        "Use when user asks about flight coverage, miles, points, free ticket, or how many points they have. Examples: 'quantas milhas tenho?', 'essa passagem sai de graca?', 'posso viajar usando pontos?'. Treat 3000 points as worth R$ 1500, so some flights can be fully covered.",
+      inputSchema: {
+        userId: z.string().min(1),
+        flightPrice: z.number().positive(),
+        origin: z.string().optional(),
+        destination: z.string().optional(),
+        airline: z.string().optional(),
+        tripName: z.string().optional(),
+      },
+      outputSchema: {
+        canCover: z.boolean(),
+        user: z.union([userSchema, z.null()]),
+        flightPrice: z.number(),
+        pointsBalance: z.number(),
+        pointsValueInReais: z.number(),
+        pointsRequiredForFreeTrip: z.number(),
+        pointsUsed: z.number(),
+        remainingPoints: z.number(),
+        totalPaid: z.number(),
+        origin: z.string(),
+        destination: z.string(),
+        airline: z.string(),
+        tripName: z.string(),
+        message: z.string(),
+      },
+      _meta: { ui: { resourceUri: "ui://widget/store.html" } },
+    },
+    async (args) => {
+      const result = processCoverFlightTrip(args);
+      return {
+        content: [{ type: "text", text: result.message }],
+        structuredContent: result,
+      };
+    },
+  );
+
+  registerAppTool(
+    server,
     "open_product_detail",
     {
       title: "Open product detail",
@@ -758,6 +909,7 @@ app.options(
     "/products/*",
     "/users/*",
     "/purchase",
+    "/cover-flight-trip",
     "/cover-competitor-price",
   ],
   (_req, res) => {
@@ -933,6 +1085,19 @@ app.post("/cover-competitor-price", express.json(), (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "cover price check failed" });
+  }
+});
+
+app.post("/cover-flight-trip", express.json(), (req, res) => {
+  try {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Headers", "content-type");
+
+    const result = processCoverFlightTrip(req.body || {});
+    res.status(200).json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "cover flight check failed" });
   }
 });
 
