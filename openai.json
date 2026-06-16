@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Loja Itau API",
-    "description": "API de loja para buscar produtos, abrir detalhes e comprar itens como iPhone e AirPods.",
+    "description": "API de loja e investimentos para buscar produtos, abrir detalhes, comprar itens e consultar OpenBanking com saldo e carteiras de investimentos. Sempre que o usuario perguntar sobre carteira, saldo investido, bancos conectados, OpenBanking, BancoA ou BancoB, use a operacao getUserInvestments.",
     "version": "1.0.0"
   },
   "servers": [
@@ -344,6 +344,187 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/users/{id}/investments": {
+      "get": {
+        "description": "Retorna a carteira consolidada de investimentos do usuario, incluindo o banco principal e os bancos conectados via OpenBanking. Use esta operacao quando o usuario perguntar: 'meus investimentos', 'minha carteira', 'saldo nos bancos conectados', 'dados do BancoA/BancoB', 'open banking'.",
+        "operationId": "getUserInvestments",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "ID do usuario",
+            "example": "user-1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Carteira consolidada do usuario",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "found": { "type": "boolean" },
+                    "openBanking": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "enabled": { "type": "boolean" },
+                            "connectedBanks": {
+                              "type": "array",
+                              "items": { "type": "string" }
+                            },
+                            "permissions": {
+                              "type": "array",
+                              "items": { "type": "string" }
+                            }
+                          },
+                          "required": [
+                            "enabled",
+                            "connectedBanks",
+                            "permissions"
+                          ]
+                        },
+                        { "type": "null" }
+                      ]
+                    },
+                    "accounts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "bank": { "type": "string" },
+                          "accountType": { "type": "string" },
+                          "balance": { "type": "number" },
+                          "currency": { "type": "string" },
+                          "investedAmount": { "type": "number" },
+                          "currentInvestmentValue": { "type": "number" },
+                          "investments": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": { "type": "string" },
+                                "name": { "type": "string" },
+                                "category": { "type": "string" },
+                                "investedAmount": { "type": "number" },
+                                "currentValue": { "type": "number" },
+                                "profitability": { "type": "string" },
+                                "annualYield": { "type": "string" },
+                                "liquidity": { "type": "string" }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "category",
+                                "investedAmount",
+                                "currentValue",
+                                "profitability"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "bank",
+                          "accountType",
+                          "balance",
+                          "currency",
+                          "investments"
+                        ]
+                      }
+                    },
+                    "cashBalance": { "type": "number" },
+                    "investedAmount": { "type": "number" },
+                    "currentInvestmentValue": { "type": "number" },
+                    "consolidatedAssets": { "type": "number" },
+                    "message": { "type": "string" },
+                    "user": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": { "type": "string" },
+                            "name": { "type": "string" },
+                            "email": { "type": "string" },
+                            "points": { "type": "number" }
+                          }
+                        },
+                        { "type": "null" }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "found",
+                    "openBanking",
+                    "accounts",
+                    "cashBalance",
+                    "investedAmount",
+                    "currentInvestmentValue",
+                    "consolidatedAssets",
+                    "message",
+                    "user"
+                  ],
+                  "examples": [
+                    {
+                      "found": true,
+                      "openBanking": {
+                        "enabled": true,
+                        "connectedBanks": ["BancoA", "BancoB"],
+                        "permissions": [
+                          "saldo",
+                          "investimentos",
+                          "posicaoConsolidada"
+                        ]
+                      },
+                      "accounts": [
+                        {
+                          "bank": "Itaú",
+                          "accountType": "Conta corrente",
+                          "balance": 128430.18,
+                          "currency": "BRL",
+                          "investedAmount": 85000,
+                          "currentInvestmentValue": 88723.22,
+                          "investments": []
+                        },
+                        {
+                          "bank": "BancoA",
+                          "accountType": "Conta digital",
+                          "balance": 45210.55,
+                          "currency": "BRL",
+                          "investedAmount": 42000,
+                          "currentInvestmentValue": 44690.99,
+                          "investments": []
+                        }
+                      ],
+                      "cashBalance": 192400.85,
+                      "investedAmount": 167000,
+                      "currentInvestmentValue": 175586.13,
+                      "consolidatedAssets": 367986.98,
+                      "message": "Portfolio consolidado de Lucas com acesso OpenBanking.",
+                      "user": {
+                        "id": "user-1",
+                        "name": "Lucas",
+                        "email": "lucas@example.com",
+                        "points": 5000
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Usuario nao encontrado"
+          },
+          "401": {
+            "description": "Nao autorizado (quando OAuth estiver habilitado)"
           }
         }
       }

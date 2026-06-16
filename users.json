@@ -3,6 +3,110 @@
     "id": "user-1",
     "name": "Lucas",
     "email": "lucas@example.com",
-    "points": 5000
+    "points": 5000,
+    "openBanking": {
+      "enabled": true,
+      "connectedBanks": ["BancoA", "BancoB"],
+      "permissions": ["saldo", "investimentos", "posicaoConsolidada"]
+    },
+    "financialProfile": {
+      "mainBank": "Itaú",
+      "accounts": [
+        {
+          "bank": "Itaú",
+          "accountType": "Conta corrente",
+          "balance": 128430.18,
+          "currency": "BRL",
+          "investments": [
+            {
+              "id": "itau-cdb-001",
+              "name": "CDB Liquidez Diária",
+              "category": "renda_fixa",
+              "investedAmount": 42000,
+              "currentValue": 43186.42,
+              "profitability": "102% do CDI",
+              "annualYield": "11,12% a.a.",
+              "liquidity": "D+0"
+            },
+            {
+              "id": "itau-tesouro-selic-001",
+              "name": "Tesouro Selic 2029",
+              "category": "tesouro_direto",
+              "investedAmount": 28000,
+              "currentValue": 29654.77,
+              "profitability": "Selic + 0,10% a.a.",
+              "annualYield": "10,65% a.a.",
+              "liquidity": "D+1"
+            },
+            {
+              "id": "itau-fundo-di-001",
+              "name": "Fundo DI Reserva",
+              "category": "fundo",
+              "investedAmount": 15000,
+              "currentValue": 15882.03,
+              "profitability": "98% do CDI",
+              "annualYield": "10,70% a.a.",
+              "liquidity": "D+1"
+            }
+          ]
+        },
+        {
+          "bank": "BancoA",
+          "accountType": "Conta digital",
+          "balance": 45210.55,
+          "currency": "BRL",
+          "investments": [
+            {
+              "id": "bancoa-lci-001",
+              "name": "LCI Premium 12 meses",
+              "category": "renda_fixa",
+              "investedAmount": 30000,
+              "currentValue": 31924.11,
+              "profitability": "97% do CDI isento de IR",
+              "annualYield": "10,42% a.a.",
+              "liquidity": "No vencimento"
+            },
+            {
+              "id": "bancoa-etf-001",
+              "name": "Carteira ETF Global",
+              "category": "variavel",
+              "investedAmount": 12000,
+              "currentValue": 12766.88,
+              "profitability": "Exposição internacional",
+              "annualYield": "15,20% a.a.",
+              "liquidity": "D+2"
+            }
+          ]
+        },
+        {
+          "bank": "BancoB",
+          "accountType": "Conta salário",
+          "balance": 18760.12,
+          "currency": "BRL",
+          "investments": [
+            {
+              "id": "bancob-cdb-001",
+              "name": "CDB Flexível 110% CDI",
+              "category": "renda_fixa",
+              "investedAmount": 18000,
+              "currentValue": 18984.33,
+              "profitability": "110% do CDI",
+              "annualYield": "11,56% a.a.",
+              "liquidity": "D+1"
+            },
+            {
+              "id": "bancob-tesouro-ipca-001",
+              "name": "Tesouro IPCA+ 2035",
+              "category": "tesouro_direto",
+              "investedAmount": 22000,
+              "currentValue": 23187.59,
+              "profitability": "IPCA + 5,45% a.a.",
+              "annualYield": "12,08% a.a.",
+              "liquidity": "D+1"
+            }
+          ]
+        }
+      ]
+    }
   }
 ]

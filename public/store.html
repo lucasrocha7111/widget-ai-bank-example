@@ -701,6 +701,208 @@
         flex: 1;
       }
 
+      .invest-shell {
+        margin-top: 18px;
+        border-radius: 18px;
+        border: 1px solid #d9e6fb;
+        background:
+          radial-gradient(circle at 90% 0%, #edf6ff 0%, transparent 40%),
+          linear-gradient(180deg, #f9fcff 0%, #ffffff 100%);
+        padding: 18px;
+        box-shadow: 0 12px 26px rgba(16, 33, 57, 0.08);
+      }
+
+      .invest-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .invest-kicker {
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font-size: 11px;
+        color: #4c74b8;
+        font-weight: 700;
+      }
+
+      .invest-head h2 {
+        margin: 6px 0 0;
+        font-size: 24px;
+      }
+
+      .invest-note {
+        margin: 10px 0 0;
+        color: #4e6383;
+        font-size: 14px;
+      }
+
+      .ob-pill-row {
+        margin-top: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .ob-pill {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #0f3570, #1f5fb6);
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 6px 10px;
+      }
+
+      .ob-pill.muted {
+        background: #e9f0fb;
+        color: #36517c;
+        font-weight: 600;
+      }
+
+      .invest-summary-grid {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .invest-summary-card {
+        border-radius: 12px;
+        border: 1px solid #d8e4f8;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .invest-summary-card span {
+        display: block;
+        color: #536888;
+        font-size: 12px;
+      }
+
+      .invest-summary-card strong {
+        display: block;
+        margin-top: 6px;
+        font-size: 19px;
+        color: #102139;
+      }
+
+      .invest-summary-card.highlight {
+        border-color: #f1c58d;
+        background: linear-gradient(135deg, #fff4e8, #fffaf4);
+      }
+
+      .bank-grid {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .bank-card {
+        border-radius: 14px;
+        border: 1px solid #dde8f8;
+        background: #fff;
+        padding: 14px;
+      }
+
+      .bank-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .bank-top h3 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .bank-top span {
+        font-size: 12px;
+        color: #5d7191;
+        background: #eef4ff;
+        padding: 4px 8px;
+        border-radius: 999px;
+      }
+
+      .bank-metrics {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .bank-metrics p {
+        margin: 0;
+        border-radius: 10px;
+        border: 1px solid #e8eef9;
+        background: #fbfdff;
+        padding: 8px;
+      }
+
+      .bank-metrics span {
+        display: block;
+        font-size: 11px;
+        color: #5d7191;
+      }
+
+      .bank-metrics strong {
+        display: block;
+        margin-top: 4px;
+        font-size: 14px;
+      }
+
+      .inv-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .inv-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+        border-radius: 10px;
+        border: 1px solid #eef2f8;
+        background: #fcfdff;
+        padding: 10px;
+      }
+
+      .inv-name {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .inv-meta {
+        margin: 4px 0 0;
+        color: #5f7394;
+        font-size: 12px;
+      }
+
+      .inv-values {
+        text-align: right;
+      }
+
+      .inv-values span {
+        display: block;
+        font-size: 14px;
+        font-weight: 700;
+        color: #0f2f58;
+      }
+
+      .inv-values small {
+        display: block;
+        margin-top: 3px;
+        font-size: 11px;
+        color: #637895;
+      }
+
       .modal-overlay {
         position: fixed;
         inset: 0;
@@ -760,6 +962,20 @@
           right: 10%;
           top: 30%;
           font-size: 64px;
+        }
+
+        .invest-summary-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .bank-grid,
+        .bank-metrics {
+          grid-template-columns: 1fr;
+        }
+
+        .invest-head {
+          flex-direction: column;
+          align-items: flex-start;
         }
       }
     </style>

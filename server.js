@@ -48,6 +48,10 @@ function saveUsers(users) {
   writeFileSync(usersPath, JSON.stringify(users, null, 2), "utf8");
 }
 
+function sumBy(items, selector) {
+  return items.reduce((total, item) => total + Number(selector(item) || 0), 0);
+}
+
 function normalizeText(text) {
   return String(text || "")
     .normalize("NFD")
@@ -380,12 +384,134 @@ const productSchema = z.object({
   stock: z.number(),
 });
 
+const investmentSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  category: z.string(),
+  investedAmount: z.number(),
+  currentValue: z.number(),
+  profitability: z.string(),
+  annualYield: z.string().optional(),
+  liquidity: z.string().optional(),
+  bank: z.string().optional(),
+  accountType: z.string().optional(),
+  accountBalance: z.number().optional(),
+});
+
+const bankAccountSchema = z.object({
+  bank: z.string(),
+  accountType: z.string(),
+  balance: z.number(),
+  currency: z.string(),
+  investedAmount: z.number().optional(),
+  currentInvestmentValue: z.number().optional(),
+  investments: z.array(investmentSchema),
+});
+
+const openBankingSchema = z.object({
+  enabled: z.boolean(),
+  connectedBanks: z.array(z.string()),
+  permissions: z.array(z.string()),
+});
+
+const financialProfileSchema = z.object({
+  mainBank: z.string(),
+  accounts: z.array(bankAccountSchema),
+});
+
 const userSchema = z.object({
   id: z.string(),
   name: z.string(),
   email: z.string(),
   points: z.number(),
+  openBanking: openBankingSchema.optional(),
+  financialProfile: financialProfileSchema.optional(),
 });
+
+function buildInvestmentPortfolio(userId) {
+  const users = loadUsers();
+  const user = users.find((entry) => entry.id === userId) ?? null;
+
+  if (!user) {
+    return {
+      found: false,
+      user: null,
+      openBanking: null,
+      financialProfile: null,
+      accounts: [],
+      investments: [],
+      cashBalance: 0,
+      investedAmount: 0,
+      currentInvestmentValue: 0,
+      consolidatedAssets: 0,
+      message: "User not found",
+    };
+  }
+
+  const financialProfile = user.financialProfile ?? {
+    mainBank: "",
+    accounts: [],
+  };
+  const accounts = financialProfile.accounts ?? [];
+  const enrichedAccounts = accounts.map((account) => {
+    const accountInvestments = account.investments ?? [];
+    return {
+      ...account,
+      investments: accountInvestments,
+      investedAmount: Number(
+        sumBy(
+          accountInvestments,
+          (investment) => investment.investedAmount,
+        ).toFixed(2),
+      ),
+      currentInvestmentValue: Number(
+        sumBy(
+          accountInvestments,
+          (investment) => investment.currentValue,
+        ).toFixed(2),
+      ),
+    };
+  });
+
+  const investments = enrichedAccounts.flatMap((account) =>
+    (account.investments ?? []).map((investment) => ({
+      ...investment,
+      bank: account.bank,
+      accountType: account.accountType,
+      accountBalance: account.balance,
+    })),
+  );
+
+  const cashBalance = Number(
+    sumBy(enrichedAccounts, (account) => account.balance).toFixed(2),
+  );
+  const investedAmount = Number(
+    sumBy(investments, (investment) => investment.investedAmount).toFixed(2),
+  );
+  const currentInvestmentValue = Number(
+    sumBy(investments, (investment) => investment.currentValue).toFixed(2),
+  );
+  const consolidatedAssets = Number(
+    (cashBalance + currentInvestmentValue).toFixed(2),
+  );
+
+  return {
+    found: true,
+    user,
+    openBanking: user.openBanking ?? null,
+    financialProfile: {
+      mainBank: financialProfile.mainBank ?? "",
+      accounts: enrichedAccounts,
+    },
+    accounts: enrichedAccounts,
+    investments,
+    cashBalance,
+    investedAmount,
+    currentInvestmentValue,
+    consolidatedAssets,
+    message: `Portfolio consolidado de ${user.name} com acesso OpenBanking.`,
+  };
+}
 
 const todoOutputSchema = {
   tasks: z.array(
@@ -764,6 +890,39 @@ function createTodoServer() {
 
   registerAppTool(
     server,
+    "get_user_investments",
+    {
+      title: "Get user investments",
+      description:
+        "Returns the user's own bank investments and connected OpenBanking bank data, including balances and consolidated portfolio summary.",
+      inputSchema: { userId: z.string().min(1) },
+      outputSchema: {
+        found: z.boolean(),
+        user: z.union([userSchema, z.null()]),
+        openBanking: z.union([openBankingSchema, z.null()]),
+        financialProfile: z.union([financialProfileSchema, z.null()]),
+        accounts: z.array(bankAccountSchema),
+        investments: z.array(investmentSchema),
+        cashBalance: z.number(),
+        investedAmount: z.number(),
+        currentInvestmentValue: z.number(),
+        consolidatedAssets: z.number(),
+        message: z.string(),
+      },
+      _meta: { ui: { resourceUri: "ui://widget/store.html" } },
+    },
+    async (args) => {
+      const userId = args?.userId?.trim?.() || "user-1";
+      const result = buildInvestmentPortfolio(userId);
+      return {
+        content: [{ type: "text", text: result.message }],
+        structuredContent: result,
+      };
+    },
+  );
+
+  registerAppTool(
+    server,
     "purchase_product",
     {
       title: "Purchase product",
@@ -1029,6 +1188,21 @@ app.get("/users/:id", (req, res) => {
     res.status(200).json(user);
   } catch (err) {
     res.status(500).json({ error: "failed to load user" });
+  }
+});
+
+app.get("/users/:id/investments", (req, res) => {
+  try {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    const userId = String(req.params.id || "").trim();
+    const result = buildInvestmentPortfolio(userId);
+    if (!result.found) {
+      res.status(404).json({ error: "user not found" });
+      return;
+    }
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ error: "failed to load investment portfolio" });
   }
 });
 

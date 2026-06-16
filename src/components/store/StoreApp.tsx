@@ -9,6 +9,44 @@ import {
 import ProductCard from "./ProductCard";
 import PurchaseModal from "./PurchaseModal";
 
+type InvestmentItem = {
+  id: string;
+  name: string;
+  category: string;
+  investedAmount: number;
+  currentValue: number;
+  profitability: string;
+  annualYield?: string;
+  liquidity?: string;
+};
+
+type BankAccountPortfolio = {
+  bank: string;
+  accountType: string;
+  balance: number;
+  currency: string;
+  investedAmount?: number;
+  currentInvestmentValue?: number;
+  investments: InvestmentItem[];
+};
+
+type OpenBankingInfo = {
+  enabled: boolean;
+  connectedBanks: string[];
+  permissions: string[];
+};
+
+type InvestmentPortfolioResponse = {
+  found: boolean;
+  openBanking: OpenBankingInfo | null;
+  accounts: BankAccountPortfolio[];
+  cashBalance: number;
+  investedAmount: number;
+  currentInvestmentValue: number;
+  consolidatedAssets: number;
+  message: string;
+};
+
 export default function StoreApp() {
   const [query, setQuery] = useState("");
   const [searchAnswer, setSearchAnswer] = useState("");
@@ -35,6 +73,10 @@ export default function StoreApp() {
   const [flightBusy, setFlightBusy] = useState(false);
   const [userPoints, setUserPoints] = useState<number | null>(null);
   const [userLoading, setUserLoading] = useState(true);
+  const [portfolio, setPortfolio] =
+    useState<InvestmentPortfolioResponse | null>(null);
+  const [portfolioBusy, setPortfolioBusy] = useState(true);
+  const [portfolioError, setPortfolioError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -55,6 +97,50 @@ export default function StoreApp() {
     }
 
     loadUserPoints();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadInvestments() {
+      setPortfolioBusy(true);
+      setPortfolioError("");
+
+      try {
+        const response = await fetch(
+          `${apiOrigin}/users/${defaultUserId}/investments`,
+        );
+        const data = await response.json();
+
+        if (!active) return;
+
+        if (!response.ok || !data?.found) {
+          throw new Error(
+            data?.error || "Não foi possível carregar investimentos.",
+          );
+        }
+
+        setPortfolio(data);
+      } catch (error) {
+        if (!active) return;
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Erro ao carregar investimentos.";
+        setPortfolioError(message);
+        setPortfolio(null);
+      } finally {
+        if (active) {
+          setPortfolioBusy(false);
+        }
+      }
+    }
+
+    loadInvestments();
 
     return () => {
       active = false;
@@ -258,6 +344,34 @@ export default function StoreApp() {
     setFeedback("");
   }
 
+  async function reloadPortfolio() {
+    setPortfolioBusy(true);
+    setPortfolioError("");
+
+    try {
+      const response = await fetch(
+        `${apiOrigin}/users/${defaultUserId}/investments`,
+      );
+      const data = await response.json();
+
+      if (!response.ok || !data?.found) {
+        throw new Error(
+          data?.error || "Não foi possível atualizar investimentos.",
+        );
+      }
+
+      setPortfolio(data);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Erro ao atualizar investimentos.";
+      setPortfolioError(message);
+    } finally {
+      setPortfolioBusy(false);
+    }
+  }
+
   const pointsLabel = userLoading
     ? "carregando..."
     : `${userPoints ?? 0} pontos`;
@@ -303,6 +417,114 @@ export default function StoreApp() {
             {feedback}
           </p>
         ) : null}
+
+        <section className="invest-shell">
+          <div className="invest-head">
+            <div>
+              <p className="invest-kicker">Open Finance</p>
+              <h2>Carteira de investimentos</h2>
+            </div>
+            <button
+              type="button"
+              className="secondary-btn"
+              onClick={reloadPortfolio}
+              disabled={portfolioBusy}
+            >
+              {portfolioBusy ? "Atualizando..." : "Atualizar dados"}
+            </button>
+          </div>
+
+          {portfolio?.openBanking?.enabled ? (
+            <div className="ob-pill-row">
+              <span className="ob-pill">OpenBanking ativo</span>
+              {portfolio.openBanking.connectedBanks.map((bank) => (
+                <span key={bank} className="ob-pill muted">
+                  {bank}
+                </span>
+              ))}
+            </div>
+          ) : null}
+
+          {portfolioBusy ? (
+            <p className="invest-note">Carregando carteira...</p>
+          ) : null}
+          {portfolioError ? (
+            <p className="feedback err">{portfolioError}</p>
+          ) : null}
+
+          {portfolio ? (
+            <>
+              <div className="invest-summary-grid">
+                <div className="invest-summary-card">
+                  <span>Saldo em conta</span>
+                  <strong>{currency(portfolio.cashBalance)}</strong>
+                </div>
+                <div className="invest-summary-card">
+                  <span>Total investido</span>
+                  <strong>{currency(portfolio.investedAmount)}</strong>
+                </div>
+                <div className="invest-summary-card">
+                  <span>Valor atual dos investimentos</span>
+                  <strong>{currency(portfolio.currentInvestmentValue)}</strong>
+                </div>
+                <div className="invest-summary-card highlight">
+                  <span>Patrimônio consolidado</span>
+                  <strong>{currency(portfolio.consolidatedAssets)}</strong>
+                </div>
+              </div>
+
+              <div className="bank-grid">
+                {portfolio.accounts.map((account) => (
+                  <article
+                    key={`${account.bank}-${account.accountType}`}
+                    className="bank-card"
+                  >
+                    <div className="bank-top">
+                      <h3>{account.bank}</h3>
+                      <span>{account.accountType}</span>
+                    </div>
+
+                    <div className="bank-metrics">
+                      <p>
+                        <span>Saldo</span>
+                        <strong>{currency(account.balance)}</strong>
+                      </p>
+                      <p>
+                        <span>Total investido</span>
+                        <strong>{currency(account.investedAmount ?? 0)}</strong>
+                      </p>
+                      <p>
+                        <span>Valor atual</span>
+                        <strong>
+                          {currency(account.currentInvestmentValue ?? 0)}
+                        </strong>
+                      </p>
+                    </div>
+
+                    <div className="inv-list">
+                      {account.investments.map((inv) => (
+                        <div key={inv.id} className="inv-row">
+                          <div>
+                            <p className="inv-name">{inv.name}</p>
+                            <p className="inv-meta">
+                              {inv.category} • {inv.profitability}
+                            </p>
+                          </div>
+                          <div className="inv-values">
+                            <span>{currency(inv.currentValue)}</span>
+                            <small>
+                              Investido: {currency(inv.investedAmount)}
+                            </small>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </>
+          ) : null}
+        </section>
 
         {!flightResult && !showFlightForm ? (
           <section className="flight-hero">
